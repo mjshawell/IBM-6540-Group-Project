@@ -1,0 +1,530 @@
+---
+title: "Analyzing the Effect of Discounts on Retail Sales Volume and Revenue"
+subtitle: "Project Proposal Presentation"
+author: "Your Name / Team Name"
+date: "July 2, 2026"
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    toc: false
+    progress: true
+    transition: fade
+    incremental: false
+    chalkboard: true
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# Load packages
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(scales)
+
+# Optional packages
+# install.packages("skimr")
+# install.packages("broom")
+```
+
+## Title Slide
+
+### Analyzing the Effect of Discounts on Retail Sales Volume and Revenue
+
+**Course:** Add course name here  
+**Team:** Add team member names here  
+**Dataset:** Retail Sales Data with Seasonal Trends and Marketing  
+
+---
+
+## Project Overview
+
+This proposal examines whether **discount percentage** is associated with higher retail sales volume and revenue.
+
+The project focuses on five research objectives related to:
+
+- Sales volume
+- Sales revenue
+- Product categories
+- Marketing spend
+- Seasonality and holidays
+
+---
+
+## Problem Definition
+
+Retailers frequently use discounts to increase demand, attract customers, and move inventory.
+
+However, discounts may not always improve business performance because they can increase units sold while reducing revenue per item.
+
+**Problem:** The business needs to understand whether discounts meaningfully improve sales volume and revenue across products, stores, and seasonal periods.
+
+---
+
+## Audience
+
+The primary audience for this project is a **retail marketing or ecommerce management team**.
+
+This audience may include:
+
+- Marketing managers
+- Store managers
+- Ecommerce managers
+- Pricing analysts
+- Inventory planners
+
+---
+
+## Importance of the Topic
+
+Understanding discount effectiveness is important because it can help the audience:
+
+- Avoid unnecessary revenue loss from excessive discounting
+- Identify which products respond best to promotions
+- Improve pricing and promotional decisions
+- Better coordinate marketing spend with discount campaigns
+- Plan promotions around holidays and seasonal demand
+
+---
+
+## Research Objectives
+
+**RO1:** Analyze whether higher discount percentages are associated with higher units sold.  
+**RO2:** Examine whether discounts increase sales revenue.  
+**RO3:** Compare the effect of discounts across product categories.  
+**RO4:** Analyze whether marketing spend strengthens the impact of discounts.  
+**RO5:** Examine whether discounts perform differently during holidays or seasonal periods.
+
+---
+
+## Population
+
+The population of interest is retail transaction or sales records from stores selling multiple product categories across different time periods.
+
+For this project, each row in the dataset represents a sales record that may include:
+
+- Store information
+- Product category
+- Date
+- Units sold
+- Sales revenue
+- Discount percentage
+- Marketing spend
+- Holiday or seasonal indicators
+
+---
+
+## Sampling and Data Collection
+
+The project will use a secondary dataset from Kaggle titled:
+
+**Retail Sales Data with Seasonal Trends and Marketing**
+
+The dataset will be treated as a sample of retail sales records that can be used to study relationships between discounts, revenue, product category, marketing spend, and seasonal trends.
+
+---
+
+## Data Wrangling Plan
+
+The raw records will be prepared for analysis by:
+
+1. Importing the CSV file into R
+2. Cleaning column names
+3. Checking missing values and duplicates
+4. Converting date variables into date format
+5. Creating month, quarter, and season variables
+6. Creating discount groups
+7. Summarizing sales outcomes by category, location, and time period
+
+---
+
+## From Records to Data
+
+```{r}
+#| label: import-data-template
+#| eval: false
+
+retail_raw <- read_csv("data/retail_sales_data.csv")
+
+retail <- retail_raw |> 
+  clean_names()
+
+glimpse(retail)
+```
+
+---
+
+## Tidying the Data
+
+```{r}
+#| label: tidy-data-template
+#| eval: false
+
+retail_tidy <- retail |> 
+  mutate(
+    date = mdy(date),
+    month = month(date, label = TRUE),
+    quarter = quarter(date),
+    discount_group = case_when(
+      discount_percentage <= 10 ~ "Low discount: 0-10%",
+      discount_percentage <= 25 ~ "Moderate discount: 11-25%",
+      discount_percentage > 25 ~ "High discount: 26%+",
+      TRUE ~ "Missing"
+    )
+  )
+```
+
+---
+
+## Transforming the Data
+
+```{r}
+#| label: transform-data-template
+#| eval: false
+
+sales_summary <- retail_tidy |> 
+  group_by(product_category, discount_group) |> 
+  summarise(
+    avg_units_sold = mean(units_sold, na.rm = TRUE),
+    avg_sales_revenue = mean(sales_revenue_usd, na.rm = TRUE),
+    avg_marketing_spend = mean(marketing_spend_usd, na.rm = TRUE),
+    records = n(),
+    .groups = "drop"
+  )
+
+sales_summary
+```
+
+---
+
+## RO1: Discounts and Units Sold
+
+**Research Objective:** Analyze whether higher discount percentages are associated with higher units sold.
+
+| Element | Plan |
+|---|---|
+| Independent Variable | Discount percentage |
+| Dependent Variable | Units sold |
+| Controls | Product category, store location, day of week, holiday effect |
+| Main Question | Do higher discounts lead to more units sold? |
+
+---
+
+## RO1: Wrangling and Visualization Plan
+
+**Plan for data wrangling:**
+
+- Convert discount percentage to numeric
+- Create discount groups
+- Summarize average units sold by discount group
+
+**Plan for data visualization:**
+
+- Scatterplot of discount percentage vs units sold
+- Bar chart of average units sold by discount group
+- Boxplot of units sold by discount group
+
+```{r}
+#| label: ro1-visual-template
+#| eval: false
+
+retail_tidy |> 
+  ggplot(aes(x = discount_percentage, y = units_sold)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Discount Percentage vs Units Sold",
+    x = "Discount Percentage",
+    y = "Units Sold"
+  )
+```
+
+---
+
+## RO2: Discounts and Sales Revenue
+
+**Research Objective:** Examine whether discounts increase sales revenue.
+
+| Element | Plan |
+|---|---|
+| Independent Variable | Discount percentage |
+| Dependent Variable | Sales revenue |
+| Controls | Units sold, product category, marketing spend |
+| Main Question | Do discounts increase total revenue or only increase volume? |
+
+---
+
+## RO2: Wrangling and Visualization Plan
+
+**Plan for data wrangling:**
+
+- Group records by discount level
+- Calculate average and total sales revenue
+- Compare revenue across discount groups
+
+**Plan for data visualization:**
+
+- Bar chart of average revenue by discount group
+- Scatterplot of discount percentage vs sales revenue
+- Revenue comparison table
+
+```{r}
+#| label: ro2-visual-template
+#| eval: false
+
+retail_tidy |> 
+  group_by(discount_group) |> 
+  summarise(avg_revenue = mean(sales_revenue_usd, na.rm = TRUE)) |> 
+  ggplot(aes(x = discount_group, y = avg_revenue)) +
+  geom_col() +
+  labs(
+    title = "Average Sales Revenue by Discount Group",
+    x = "Discount Group",
+    y = "Average Sales Revenue"
+  )
+```
+
+---
+
+## RO3: Discounts by Product Category
+
+**Research Objective:** Compare the effect of discounts across product categories.
+
+| Element | Plan |
+|---|---|
+| Independent Variables | Discount percentage, product category |
+| Dependent Variable | Units sold or sales revenue |
+| Grouping Variable | Product category |
+| Main Question | Which product categories respond most strongly to discounts? |
+
+---
+
+## RO3: Wrangling and Visualization Plan
+
+**Plan for data wrangling:**
+
+- Group data by product category and discount group
+- Calculate average units sold and average revenue
+- Rank categories by discount response
+
+**Plan for data visualization:**
+
+- Faceted bar chart by product category
+- Category-level comparison table
+- Product category ranking chart
+
+```{r}
+#| label: ro3-visual-template
+#| eval: false
+
+retail_tidy |> 
+  group_by(product_category, discount_group) |> 
+  summarise(avg_units = mean(units_sold, na.rm = TRUE), .groups = "drop") |> 
+  ggplot(aes(x = discount_group, y = avg_units)) +
+  geom_col() +
+  facet_wrap(~ product_category) +
+  labs(
+    title = "Average Units Sold by Discount Group and Product Category",
+    x = "Discount Group",
+    y = "Average Units Sold"
+  )
+```
+
+---
+
+## RO4: Marketing Spend and Discount Performance
+
+**Research Objective:** Analyze whether marketing spend strengthens the impact of discounts.
+
+| Element | Plan |
+|---|---|
+| Independent Variables | Discount percentage, marketing spend |
+| Dependent Variable | Sales revenue or units sold |
+| Possible Interaction | Discount percentage × marketing spend |
+| Main Question | Do discounts perform better when supported by higher marketing spend? |
+
+---
+
+## RO4: Wrangling and Visualization Plan
+
+**Plan for data wrangling:**
+
+- Create low, medium, and high marketing spend groups
+- Compare sales outcomes across discount and marketing spend groups
+- Test whether discount effectiveness changes with marketing support
+
+**Plan for data visualization:**
+
+- Scatterplot of marketing spend vs sales revenue
+- Bar chart by marketing spend group and discount group
+- Interaction-style line chart
+
+```{r}
+#| label: ro4-visual-template
+#| eval: false
+
+retail_tidy |> 
+  mutate(
+    marketing_group = ntile(marketing_spend_usd, 3),
+    marketing_group = case_when(
+      marketing_group == 1 ~ "Low marketing spend",
+      marketing_group == 2 ~ "Medium marketing spend",
+      marketing_group == 3 ~ "High marketing spend"
+    )
+  ) |> 
+  group_by(marketing_group, discount_group) |> 
+  summarise(avg_revenue = mean(sales_revenue_usd, na.rm = TRUE), .groups = "drop") |> 
+  ggplot(aes(x = discount_group, y = avg_revenue, group = marketing_group)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ marketing_group) +
+  labs(
+    title = "Discount Performance by Marketing Spend Group",
+    x = "Discount Group",
+    y = "Average Sales Revenue"
+  )
+```
+
+---
+
+## RO5: Discounts, Holidays, and Seasonality
+
+**Research Objective:** Examine whether discounts perform differently during holidays or seasonal periods.
+
+| Element | Plan |
+|---|---|
+| Independent Variables | Discount percentage, holiday effect, month, day of week |
+| Dependent Variable | Units sold or sales revenue |
+| Seasonal Variables | Month, quarter, holiday effect, day of week |
+| Main Question | Are discounts more effective during holidays or specific seasons? |
+
+---
+
+## RO5: Wrangling and Visualization Plan
+
+**Plan for data wrangling:**
+
+- Extract month and quarter from date
+- Compare holiday and non-holiday records
+- Summarize monthly sales by discount group
+
+**Plan for data visualization:**
+
+- Monthly sales line chart
+- Holiday vs non-holiday bar chart
+- Day-of-week sales heatmap
+
+```{r}
+#| label: ro5-visual-template
+#| eval: false
+
+retail_tidy |> 
+  group_by(month, discount_group) |> 
+  summarise(total_revenue = sum(sales_revenue_usd, na.rm = TRUE), .groups = "drop") |> 
+  ggplot(aes(x = month, y = total_revenue, group = discount_group)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Monthly Sales Revenue by Discount Group",
+    x = "Month",
+    y = "Total Sales Revenue"
+  )
+```
+
+---
+
+## Procedure
+
+The project will follow these steps:
+
+1. Import and inspect the retail sales dataset
+2. Clean and tidy variable names
+3. Convert date and percentage variables
+4. Create discount, marketing spend, and seasonal groups
+5. Produce summary statistics
+6. Create visualizations for each research objective
+7. Interpret findings and develop business recommendations
+
+---
+
+## Sample Characteristics
+
+The sample will be described using:
+
+- Number of records
+- Number of stores
+- Number of product categories
+- Date range
+- Average units sold
+- Average sales revenue
+- Average discount percentage
+- Average marketing spend
+
+```{r}
+#| label: sample-characteristics-template
+#| eval: false
+
+retail_tidy |> 
+  summarise(
+    total_records = n(),
+    avg_units_sold = mean(units_sold, na.rm = TRUE),
+    avg_sales_revenue = mean(sales_revenue_usd, na.rm = TRUE),
+    avg_discount = mean(discount_percentage, na.rm = TRUE),
+    avg_marketing_spend = mean(marketing_spend_usd, na.rm = TRUE)
+  )
+```
+
+---
+
+## Expected Deliverables
+
+The final project will include:
+
+- Cleaned dataset
+- Summary tables
+- Data visualizations for each research objective
+- Interpretation of discount effects
+- Business recommendations for discount and promotional strategy
+
+---
+
+## Limitations
+
+This project evaluates sales volume and sales revenue, but it may not directly measure profit.
+
+Possible limitations include:
+
+- The dataset may not include cost of goods sold
+- Discount effects may differ by unobserved customer behavior
+- The dataset is secondary and may not represent every retail environment
+- Sales revenue does not always equal profitability
+
+---
+
+## Conclusion
+
+This proposal investigates whether discounts are associated with stronger sales performance across retail records.
+
+The project will help the audience understand:
+
+- Whether discounts increase units sold
+- Whether discounts improve revenue
+- Which categories respond best to discounts
+- How marketing spend and seasonality affect discount performance
+- How retailers can make smarter promotional decisions
+
+---
+
+## References / Data Source
+
+- Kaggle dataset: **Retail Sales Data with Seasonal Trends and Marketing**
+- Add any course readings or outside sources here
+- Add literature review sources here if required later
+
