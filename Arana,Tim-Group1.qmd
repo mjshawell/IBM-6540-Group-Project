@@ -24,7 +24,7 @@ format:
 
 The group project repository, including the data file and group presentation, is available here:
 
-**Page link:** <https://mjshawell.github.io/IBM-6540-Group-Project/Evans%2CJake-Group1.html>
+**Repo link:** <https://github.com/mjshawell/IBM-6540-Group-Project>
 
 **Page link:** To be added after publishing
 

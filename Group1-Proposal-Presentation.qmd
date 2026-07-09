@@ -144,7 +144,7 @@ The population the sample represents — e.g., retail sales transactions across 
 
 -   Restate the problem and the five ROs in one or two lines
 -   What the client gains: a data-driven view of seasonality, promotion effectiveness, and category/location performance
--   Next steps toward Ch4 (Results) and Ch5 (Recommendations)
+-   Next steps toward Ch4 (Results) and Ch5 (Recommendations).
 :::
 
 ## Thank You
