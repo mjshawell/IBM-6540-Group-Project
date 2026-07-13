@@ -16,13 +16,13 @@ format:
 
 ## Group 1
 
-| Member | RO Lead |
-|---|---|
-| Jake Evans | RO __ |
-| Mickyas Shawel | RO __ |
-| Aldo Naranjo | RO __ |
-| Luis Berumen | RO __ |
-| Tim Arana | RO __ |
+| Member         | RO Lead |
+|----------------|---------|
+| Jake Evans     | RO \_\_ |
+| Mickyas Shawel | RO \_\_ |
+| Aldo Naranjo   | RO \_\_ |
+| Luis Berumen   | RO \_\_ |
+| Tim Arana      | RO \_\_ |
 
 ::: aside
 Each member leads one Research Objective (fill in assignments above).
@@ -30,10 +30,10 @@ Each member leads one Research Objective (fill in assignments above).
 
 ## Data & Repository
 
--   **Dataset:** Retail Sales Data with Seasonal Trends & Marketing (Kaggle)
-    -   <https://www.kaggle.com/datasets/abdullah0a/retail-sales-data-with-seasonal-trends-and-marketing>
-    -   30,000 records of transaction-level retail sales
--   **Group Repo:** <https://github.com/mjshawell/IBM-6540-Group-Project>
+- **Dataset:** Retail Sales Data with Seasonal Trends & Marketing (Kaggle)
+  - <https://www.kaggle.com/datasets/abdullah0a/retail-sales-data-with-seasonal-trends-and-marketing>
+  - 30,000 records of transaction-level retail sales
+- **Group Repo:** <https://github.com/mjshawell/IBM-6540-Group-Project>
 
 # Ch1: Introduction {background-color="#23351F"}
 
@@ -42,18 +42,18 @@ Each member leads one Research Objective (fill in assignments above).
 ::: callout-note
 ## Group: draft together
 
--   Who is the audience/client? (e.g., a multi-location retail chain's marketing team)
--   What decision are they struggling with? (e.g., when to spend on marketing, how deep to discount, how to plan for seasonal demand)
--   One or two sentences framing the business problem.
+- Who is the audience/client? (e.g., a multi-location retail chain's marketing team)
+- What decision are they struggling with? (e.g., when to spend on marketing, how deep to discount, how to plan for seasonal demand)
+- One or two sentences framing the business problem.
 :::
 
 ## Research Objectives
 
--   **RO1 — Seasonality:** How do sales revenue and units sold vary across seasons and months?
--   **RO2 — Marketing:** What is the relationship between marketing spend and sales revenue?
--   **RO3 — Discounting:** How does discount percentage affect units sold and revenue?
--   **RO4 — Holidays & Timing:** How do holiday periods and day of the week influence sales?
--   **RO5 — Category & Location:** How does sales performance differ by product category and store location?
+- **RO1 — Seasonality:** How do sales revenue and units sold vary across seasons and months?
+- **RO2 — Marketing:** What is the relationship between marketing spend and sales revenue?
+- **RO3 — Discounting:** How does discount percentage affect units sold and revenue?
+- **RO4 — Holidays & Timing:** How do holiday periods and day of the week influence sales?
+- **RO5 — Category & Location:** How does sales performance differ by product category and store location?
 
 ::: aside
 *Draft ROs — group to revise wording and confirm one lead per RO.*
@@ -66,10 +66,10 @@ Each member leads one Research Objective (fill in assignments above).
 
 Why does this matter for the audience? Starting angles:
 
--   Seasonal planning affects inventory, staffing, and budgets
--   Marketing dollars need ROI justification
--   Discounts drive volume but can erode margin
--   Findings translate into an actionable promotion calendar
+- Seasonal planning affects inventory, staffing, and budgets
+- Marketing dollars need ROI justification
+- Discounts drive volume but can erode margin
+- Findings translate into an actionable promotion calendar
 :::
 
 # Ch3: Methods {background-color="#23351F"}
@@ -84,56 +84,145 @@ The population the sample represents — e.g., retail sales transactions across 
 
 ## Sampling / Data Collection
 
--   Secondary data: public Kaggle dataset (link on slide 2)
--   30,000 transaction records
--   **Key variables:**
-    -   Sales Revenue (USD), Units Sold
-    -   Discount Percentage, Marketing Spend (USD)
-    -   Date, Day of the Week, Holiday Effect
-    -   Store ID, Store Location, Product Category
+- Secondary data: public Kaggle dataset (link on slide 2)
+- 30,000 transaction records
+- **Key variables:**
+  - Sales Revenue (USD), Units Sold
+  - Discount Percentage, Marketing Spend (USD)
+  - Date, Day of the Week, Holiday Effect
+  - Store ID, Store Location, Product Category
 
 ## Data Wrangling
 
--   **From records to data:** import CSV with `readr::read_csv()`; store in repo `data/` folder
--   **Tidying:** clean column names (`janitor::clean_names()`); check missing values and duplicates; convert `Date` to date type; make `Holiday Effect`, `Day of the Week`, `Product Category`, `Store Location` factors
--   **Transforming:** derive `month`, `season`, and `year` from `Date`; create spend/discount tiers as needed per RO
+- **From records to data:** import CSV with `readr::read_csv()`; store in repo `data/` folder
+- **Tidying:** clean column names (`janitor::clean_names()`); check missing values and duplicates; convert `Date` to date type; make `Holiday Effect`, `Day of the Week`, `Product Category`, `Store Location` factors
+- **Transforming:** derive `month`, `season`, and `year` from `Date`; create spend/discount tiers as needed per RO
 
 # Research Objectives {background-color="#23351F"}
 
-## RO1: Seasonality — Lead: ______
+## RO1: Discounts & Units Sold — Lead: Jake Evans
 
--   **IVs:** month, season (derived from `Date`)
--   **DVs:** Sales Revenue, Units Sold
--   **Wrangling plan:** extract month/season from `Date`; aggregate revenue and units by month
--   **Visualization plan:** line chart of monthly revenue; seasonal boxplots
+- **Objective:** Analyze whether higher discount percentages are associated with higher units sold
+- **IV:** Discount Percentage · **DV:** Units Sold
+- **Controls:** Product Category, Store Location, Day of Week, Holiday Effect
+- **Wrangling:** clean discount variable; group into Low / Moderate / High; summarize units sold by group
+- **Hypothesis direction:** higher discount percentages will be associated with higher units sold
 
-## RO2: Marketing Spend — Lead: ______
+```{r}
+#| label: ro1-setup
+#| include: false
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(scales)
+library(knitr)
+theme_set(theme_minimal(base_size = 14))
 
--   **IV:** Marketing Spend (USD)
--   **DV:** Sales Revenue
--   **Wrangling plan:** flag zero-spend vs. positive-spend transactions; create spend tiers
--   **Visualization plan:** scatterplot of spend vs. revenue with trend line; tier comparison bars
+retail <- read_csv("retail_sales_data.csv") |>
+  clean_names()
 
-## RO3: Discounting — Lead: ______
+retail_clean <- retail |>
+  mutate(
+    date = as.Date(date),
+    discount_group = case_when(
+      discount_percentage <= 10 ~ "Low discount",
+      discount_percentage <= 25 ~ "Moderate discount",
+      TRUE                      ~ "High discount"
+    ),
+    discount_group = factor(
+      discount_group,
+      levels = c("Low discount", "Moderate discount", "High discount")
+    )
+  )
 
--   **IV:** Discount Percentage
--   **DVs:** Units Sold, Sales Revenue
--   **Wrangling plan:** bin discounts (none / low / medium / high); compare distributions across bins
--   **Visualization plan:** boxplots of units sold by discount bin; discount vs. revenue scatter
+ro1_summary <- retail_clean |>
+  group_by(discount_group) |>
+  summarize(
+    n = n(),
+    avg_units_sold = mean(units_sold, na.rm = TRUE),
+    avg_revenue    = mean(sales_revenue_usd, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
 
-## RO4: Holidays & Timing — Lead: ______
+## RO1: Discount % vs. Units Sold
 
--   **IVs:** Holiday Effect, Day of the Week
--   **DVs:** Sales Revenue, Units Sold
--   **Wrangling plan:** confirm factor levels; order days Mon–Sun; group and summarize by holiday flag and day
--   **Visualization plan:** grouped bar chart of average revenue by day, split by holiday vs. non-holiday
+```{r}
+#| label: ro1-scatter
+#| code-fold: true
+#| fig-height: 4.5
+ggplot(retail_clean, aes(discount_percentage, units_sold)) +
+  geom_point(alpha = 0.08, color = "#23351F") +
+  geom_smooth(method = "lm", color = "#D9A441", linewidth = 1.2) +
+  scale_x_continuous(labels = label_percent(scale = 1)) +
+  labs(x = "Discount Percentage", y = "Units Sold")
+```
 
-## RO5: Category & Location — Lead: ______
+## RO1: Units Sold by Discount Group
 
--   **IVs:** Product Category, Store Location
--   **DVs:** Sales Revenue, Units Sold
--   **Wrangling plan:** summarize revenue/units by category and location; identify top and bottom performers
--   **Visualization plan:** faceted bar charts by location; category heatmap
+```{r}
+#| label: ro1-boxplot
+#| code-fold: true
+#| fig-height: 4.5
+ggplot(retail_clean, aes(discount_group, units_sold, fill = discount_group)) +
+  geom_boxplot(show.legend = FALSE, outlier.alpha = 0.15) +
+  scale_fill_manual(values = c("#4E6E8E", "#7FA05C", "#D9A441")) +
+  labs(x = NULL, y = "Units Sold")
+```
+
+## RO1: Average Units Sold by Discount Group
+
+```{r}
+#| label: ro1-bars
+#| code-fold: true
+#| fig-height: 4
+ggplot(ro1_summary, aes(discount_group, avg_units_sold, fill = discount_group)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = round(avg_units_sold, 1)), vjust = -0.4) +
+  scale_fill_manual(values = c("#4E6E8E", "#7FA05C", "#D9A441")) +
+  labs(x = NULL, y = "Average Units Sold")
+```
+
+## RO1: Summary by Discount Group
+
+```{r}
+#| label: ro1-table
+#| code-fold: true
+ro1_summary |>
+  mutate(
+    avg_units_sold = round(avg_units_sold, 2),
+    avg_revenue    = dollar(avg_revenue, accuracy = 0.01)
+  ) |>
+  kable(col.names = c("Discount Group", "Transactions", "Avg Units Sold", "Avg Revenue"))
+```
+
+## RO2: Marketing Spend — Lead: \_\_\_\_\_\_
+
+- **IV:** Marketing Spend (USD)
+- **DV:** Sales Revenue
+- **Wrangling plan:** flag zero-spend vs. positive-spend transactions; create spend tiers
+- **Visualization plan:** scatterplot of spend vs. revenue with trend line; tier comparison bars
+
+## RO3: Discounting — Lead: \_\_\_\_\_\_
+
+- **IV:** Discount Percentage
+- **DVs:** Units Sold, Sales Revenue
+- **Wrangling plan:** bin discounts (none / low / medium / high); compare distributions across bins
+- **Visualization plan:** boxplots of units sold by discount bin; discount vs. revenue scatter
+
+## RO4: Holidays & Timing — Lead: \_\_\_\_\_\_
+
+- **IVs:** Holiday Effect, Day of the Week
+- **DVs:** Sales Revenue, Units Sold
+- **Wrangling plan:** confirm factor levels; order days Mon–Sun; group and summarize by holiday flag and day
+- **Visualization plan:** grouped bar chart of average revenue by day, split by holiday vs. non-holiday
+
+## RO5: Category & Location — Lead: \_\_\_\_\_\_
+
+- **IVs:** Product Category, Store Location
+- **DVs:** Sales Revenue, Units Sold
+- **Wrangling plan:** summarize revenue/units by category and location; identify top and bottom performers
+- **Visualization plan:** faceted bar charts by location; category heatmap
 
 # Conclusion {background-color="#23351F"}
 
@@ -142,15 +231,15 @@ The population the sample represents — e.g., retail sales transactions across 
 ::: callout-note
 ## Group: draft together
 
--   Restate the problem and the five ROs in one or two lines
--   What the client gains: a data-driven view of seasonality, promotion effectiveness, and category/location performance
--   Next steps toward Ch4 (Results) and Ch5 (Recommendations)
+- Restate the problem and the five ROs in one or two lines
+- What the client gains: a data-driven view of seasonality, promotion effectiveness, and category/location performance
+- Next steps toward Ch4 (Results) and Ch5 (Recommendations)
 :::
 
 ## Thank You
 
 **Questions?**
 
-Group 1 — IBM 6540 | Summer 2026
+Group 1 — IBM 6540 \| Summer 2026
 
 Repo: <https://github.com/mjshawell/IBM-6540-Group-Project>
