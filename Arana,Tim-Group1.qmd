@@ -1,7 +1,7 @@
 ---
 title: "IBM 6540 Group Project"
 subtitle: "Group 1"
-author: "Jake Evans"
+author: "Tim Arana"
 institute: "Cal Poly Pomona — MSDM"
 date: today
 format:
@@ -15,10 +15,10 @@ format:
 
 ## About This File
 
-- **Name:** Jake Evans
-- **Group:** 1
-- **Course:** IBM 6540 — Applied Machine Learning for Marketing
-- **Purpose:** Individual member file for the group project repository
+-   **Name:** Tim Arana
+-   **Group:** 1
+-   **Course:** IBM 6540 — Applied Machine Learning for Marketing
+-   **Purpose:** Individual member file for the group project repository
 
 ## Group GitHub Repository
 
@@ -26,10 +26,10 @@ The group project repository, including the data file and group presentation, is
 
 **Repo link:** <https://github.com/mjshawell/IBM-6540-Group-Project>
 
-**Page link:** <https://mjshawell.github.io/IBM-6540-Group-Project/Evans%2CJake-Group1.html>
+**Page link:** To be added after publishing
 
 ## Thank You
 
 Rendered with Quarto RevealJS
 
-Jake Evans — Group 1
+Tim Arana — Group 1

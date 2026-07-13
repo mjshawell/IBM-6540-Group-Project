@@ -1,5 +1,5 @@
 ---
-title: "Retail Sales Data with Seasonal Trends & Marketing"
+title: "Analyzing the Effect of Discounts on Retail Sales Volume and Revenue Using Seasonal Retail Data"
 subtitle: "Project Proposal — Group 1"
 author: "Jake Evans · Mickyas Shawel · Aldo Naranjo · Luis Berumen · Tim Arana"
 institute: "IBM 6540 — Applied Machine Learning for Marketing | Cal Poly Pomona"
@@ -12,104 +12,13 @@ format:
     embed-resources: true
     footer: "IBM 6540 — Group 1 Project Proposal | Summer 2026"
     toc: false
+execute:
+  warning: false
+  message: false
 ---
 
-## Group 1
-
-| Member         | RO Lead |
-|----------------|---------|
-| Jake Evans     | RO \_\_ |
-| Mickyas Shawel | RO \_\_ |
-| Aldo Naranjo   | RO \_\_ |
-| Luis Berumen   | RO \_\_ |
-| Tim Arana      | RO \_\_ |
-
-::: aside
-Each member leads one Research Objective (fill in assignments above).
-:::
-
-## Data & Repository
-
-- **Dataset:** Retail Sales Data with Seasonal Trends & Marketing (Kaggle)
-  - <https://www.kaggle.com/datasets/abdullah0a/retail-sales-data-with-seasonal-trends-and-marketing>
-  - 30,000 records of transaction-level retail sales
-- **Group Repo:** <https://github.com/mjshawell/IBM-6540-Group-Project>
-
-# Ch1: Introduction {background-color="#23351F"}
-
-## Problem Definition
-
-::: callout-note
-## Group: draft together
-
-- Who is the audience/client? (e.g., a multi-location retail chain's marketing team)
-- What decision are they struggling with? (e.g., when to spend on marketing, how deep to discount, how to plan for seasonal demand)
-- One or two sentences framing the business problem.
-:::
-
-## Research Objectives
-
-- **RO1 — Seasonality:** How do sales revenue and units sold vary across seasons and months?
-- **RO2 — Marketing:** What is the relationship between marketing spend and sales revenue?
-- **RO3 — Discounting:** How does discount percentage affect units sold and revenue?
-- **RO4 — Holidays & Timing:** How do holiday periods and day of the week influence sales?
-- **RO5 — Category & Location:** How does sales performance differ by product category and store location?
-
-::: aside
-*Draft ROs — group to revise wording and confirm one lead per RO.*
-:::
-
-## Importance of the Topic
-
-::: callout-note
-## Group: draft together
-
-Why does this matter for the audience? Starting angles:
-
-- Seasonal planning affects inventory, staffing, and budgets
-- Marketing dollars need ROI justification
-- Discounts drive volume but can erode margin
-- Findings translate into an actionable promotion calendar
-:::
-
-# Ch3: Methods {background-color="#23351F"}
-
-## Population
-
-::: callout-note
-## Group: define
-
-The population the sample represents — e.g., retail sales transactions across multiple stores, locations, and product categories. Note that this is a synthetic/educational dataset and state what real-world population it stands in for.
-:::
-
-## Sampling / Data Collection
-
-- Secondary data: public Kaggle dataset (link on slide 2)
-- 30,000 transaction records
-- **Key variables:**
-  - Sales Revenue (USD), Units Sold
-  - Discount Percentage, Marketing Spend (USD)
-  - Date, Day of the Week, Holiday Effect
-  - Store ID, Store Location, Product Category
-
-## Data Wrangling
-
-- **From records to data:** import CSV with `readr::read_csv()`; store in repo `data/` folder
-- **Tidying:** clean column names (`janitor::clean_names()`); check missing values and duplicates; convert `Date` to date type; make `Holiday Effect`, `Day of the Week`, `Product Category`, `Store Location` factors
-- **Transforming:** derive `month`, `season`, and `year` from `Date`; create spend/discount tiers as needed per RO
-
-# Research Objectives {background-color="#23351F"}
-
-## RO1: Discounts & Units Sold — Lead: Jake Evans
-
-- **Objective:** Analyze whether higher discount percentages are associated with higher units sold
-- **IV:** Discount Percentage · **DV:** Units Sold
-- **Controls:** Product Category, Store Location, Day of Week, Holiday Effect
-- **Wrangling:** clean discount variable; group into Low / Moderate / High; summarize units sold by group
-- **Hypothesis direction:** higher discount percentages will be associated with higher units sold
-
 ```{r}
-#| label: ro1-setup
+#| label: global-setup
 #| include: false
 library(tidyverse)
 library(janitor)
@@ -118,123 +27,246 @@ library(scales)
 library(knitr)
 theme_set(theme_minimal(base_size = 14))
 
-retail <- read_csv("retail_sales_data.csv") |>
-  clean_names()
+csv_files <- list.files(".", pattern = "\\.csv$", recursive = TRUE, full.names = TRUE)
+data_path <- csv_files[grepl("retail|sales", csv_files, ignore.case = TRUE)][1]
+if (is.na(data_path)) data_path <- csv_files[1]
 
-retail_clean <- retail |>
+retail <- read_csv(data_path) |>
+  clean_names() |>
   mutate(
-    date = as.Date(date),
-    discount_group = case_when(
-      discount_percentage <= 10 ~ "Low discount",
-      discount_percentage <= 25 ~ "Moderate discount",
-      TRUE                      ~ "High discount"
+    date       = as.Date(date),
+    month      = month(date, label = TRUE, abbr = TRUE),
+    year       = year(date),
+    year_month = floor_date(date, "month"),
+    season = case_when(
+      month(date) %in% c(12, 1, 2)  ~ "Winter",
+      month(date) %in% c(3, 4, 5)   ~ "Spring",
+      month(date) %in% c(6, 7, 8)   ~ "Summer",
+      TRUE                          ~ "Fall"
     ),
-    discount_group = factor(
-      discount_group,
-      levels = c("Low discount", "Moderate discount", "High discount")
-    )
-  )
-
-ro1_summary <- retail_clean |>
-  group_by(discount_group) |>
-  summarize(
-    n = n(),
-    avg_units_sold = mean(units_sold, na.rm = TRUE),
-    avg_revenue    = mean(sales_revenue_usd, na.rm = TRUE),
-    .groups = "drop"
+    season = factor(season, levels = c("Winter", "Spring", "Summer", "Fall")),
+    holiday = if_else(as.logical(holiday_effect), "Holiday", "Non-holiday"),
+    day = factor(day_of_the_week,
+      levels = c("Monday", "Tuesday", "Wednesday", "Thursday",
+                 "Friday", "Saturday", "Sunday")),
+    discount_group = case_when(
+      discount_percentage == 0  ~ "No discount",
+      discount_percentage <= 10 ~ "Low (1–10%)",
+      TRUE                      ~ "High (11–20%)"
+    ),
+    discount_group = factor(discount_group,
+      levels = c("No discount", "Low (1–10%)", "High (11–20%)"))
   )
 ```
 
-## RO1: Discount % vs. Units Sold
+## Project Overview
+
+**Main research question:** How does discount percentage affect retail sales volume and revenue when accounting for product category, marketing spend, holidays, and seasonal trends?
+
+| Member         | RO Lead |
+|----------------|---------|
+| Jake Evans     | RO 1    |
+| Mickyas Shawel | RO \_\_ |
+| Aldo Naranjo   | RO \_\_ |
+| Luis Berumen   | RO \_\_ |
+| Tim Arana      | RO \_\_ |
+
+::: aside
+Dataset: [Retail Sales Data with Seasonal Trends & Marketing (Kaggle)](https://www.kaggle.com/datasets/abdullah0a/retail-sales-data-with-seasonal-trends-and-marketing) · Repo: <https://github.com/mjshawell/IBM-6540-Group-Project>
+:::
+
+# Ch1: Introduction {background-color="#23351F"}
+
+## Problem Definition
+
+- **Audience:** retail managers, ecommerce teams, marketing analysts, and promotion planners who need to evaluate discount strategy
+- Retailers frequently use discounts to attract customers, increase demand, and clear inventory
+- **The tradeoff:** discounts may increase units sold while reducing revenue per unit
+- Without data analysis, retailers may overuse discounts, underuse them, or apply the wrong discount levels to the wrong products or time periods
+
+## Research Objectives
+
+- **RO1 — Seasonality & Timing:** How do sales revenue and units sold vary across seasons, months, and holiday periods?
+- **RO2 — Discounts & Volume:** Are higher discount percentages associated with higher units sold?
+- **RO3 — Discounts & Revenue:** Do discounts increase sales revenue?
+- **RO4 — Category Differences:** Does the effect of discounts differ across product categories?
+- **RO5 — Marketing Interaction:** Does marketing spend strengthen the impact of discounts?
+
+::: aside
+Each member leads one RO — confirm assignments on slide 2.
+:::
+
+## Importance of the Topic
+
+- Helps retailers decide when discounts are useful versus when they reduce revenue efficiency
+- Supports product-level promotional planning by identifying categories that respond well to discounts
+- Improves marketing strategy by showing whether discounts perform better with higher marketing spend
+- Supports seasonal planning by comparing holiday and non-holiday performance
+- Creates a data-driven foundation for pricing, promotion, and revenue optimization decisions
+
+## Background & Hypothesis Directions
+
+| RO | Hypothesis Direction |
+|----|----------------------|
+| RO1 | Revenue and units will vary by season, with holiday periods outperforming regular periods |
+| RO2 | Higher discount percentages will be associated with higher units sold |
+| RO3 | Discounts may lift revenue up to a point, but higher discounts may not produce proportional gains |
+| RO4 | The discount–sales relationship will vary by product category |
+| RO5 | Discounts paired with higher marketing spend will show stronger sales outcomes |
+
+# Ch3: Methods {background-color="#23351F"}
+
+## Dataset Overview & Key Variables
+
+- **Source:** Kaggle secondary dataset (synthetic, designed for analytics practice) — 30,000 transaction-level records, 2022–2024
+- **DVs:** Sales Revenue (USD), Units Sold
+- **Primary IV:** Discount Percentage (0–20%)
+- **Additional predictors:** Marketing Spend (USD), Product Category, Store Location, Day of the Week, Holiday Effect, Date
+
+## Population, Sampling & Data Collection
+
+- **Population represented:** transaction-level retail sales records across stores, locations, and product categories
+- The dataset is synthetic; it stands in for multi-location retail chains that run discount and marketing programs
+- **Sampling:** secondary data collection — records are already collected and will be prepared for analysis in R
+
+## Data Wrangling Plan
+
+- **From records to data:** import CSV with `readr::read_csv()`; each row = one retail sales record
+- **Tidying:** `janitor::clean_names()`; check missing values, duplicates, and outliers; convert `Date` to date type; standardize categorical variables (category, location, day, holiday)
+- **Transforming:**
+  - `month`, `year`, `season` derived from `Date`
+  - `discount_group` from `discount_percentage` — No discount (0%), Low (1–10%), High (11–20%)
+  - Group summaries of revenue and units by discount group, category, day, and holiday status
+
+# RO1: Seasonality & Timing — Lead: Jake Evans {background-color="#23351F"}
+
+## RO1: Plan
+
+- **Objective:** How do sales revenue and units sold vary across seasons, months, and holiday periods?
+- **IVs:** month, season (derived from `Date`), Day of the Week, Holiday Effect
+- **DVs:** Sales Revenue, Units Sold
+- **Wrangling:** extract month/season from `Date`; aggregate revenue and units by month; compare holiday vs. non-holiday periods
+- **Visualization:** monthly revenue line chart; holiday comparison bars; day-of-week heatmap; seasonal summary table
+
+## RO1: Monthly Revenue Trend
 
 ```{r}
-#| label: ro1-scatter
+#| label: ro1-trend
 #| code-fold: true
 #| fig-height: 4.5
-ggplot(retail_clean, aes(discount_percentage, units_sold)) +
-  geom_point(alpha = 0.08, color = "#23351F") +
-  geom_smooth(method = "lm", color = "#D9A441", linewidth = 1.2) +
-  scale_x_continuous(labels = label_percent(scale = 1)) +
-  labs(x = "Discount Percentage", y = "Units Sold")
+retail |>
+  group_by(year_month) |>
+  summarise(total_revenue = sum(sales_revenue_usd, na.rm = TRUE), .groups = "drop") |>
+  ggplot(aes(year_month, total_revenue)) +
+  geom_line(color = "#23351F", linewidth = 1) +
+  geom_point(color = "#23351F", size = 1.8) +
+  scale_y_continuous(labels = label_dollar(scale_cut = cut_short_scale())) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") +
+  labs(x = NULL, y = "Total Revenue (USD)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-## RO1: Units Sold by Discount Group
+## RO1: Revenue by Season — Holiday vs. Non-Holiday
 
 ```{r}
-#| label: ro1-boxplot
+#| label: ro1-holiday
 #| code-fold: true
 #| fig-height: 4.5
-ggplot(retail_clean, aes(discount_group, units_sold, fill = discount_group)) +
-  geom_boxplot(show.legend = FALSE, outlier.alpha = 0.15) +
-  scale_fill_manual(values = c("#4E6E8E", "#7FA05C", "#D9A441")) +
-  labs(x = NULL, y = "Units Sold")
+retail |>
+  group_by(season, holiday) |>
+  summarise(avg_revenue = mean(sales_revenue_usd, na.rm = TRUE), .groups = "drop") |>
+  ggplot(aes(season, avg_revenue, fill = holiday)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = label_dollar()) +
+  scale_fill_manual(values = c("Holiday" = "#D9A441", "Non-holiday" = "#4E6E8E")) +
+  labs(x = NULL, y = "Avg Revenue per Transaction", fill = NULL)
 ```
 
-## RO1: Average Units Sold by Discount Group
+## RO1: Revenue by Day of Week & Month
 
 ```{r}
-#| label: ro1-bars
+#| label: ro1-heatmap
 #| code-fold: true
-#| fig-height: 4
-ggplot(ro1_summary, aes(discount_group, avg_units_sold, fill = discount_group)) +
-  geom_col(show.legend = FALSE) +
-  geom_text(aes(label = round(avg_units_sold, 1)), vjust = -0.4) +
-  scale_fill_manual(values = c("#4E6E8E", "#7FA05C", "#D9A441")) +
-  labs(x = NULL, y = "Average Units Sold")
+#| fig-height: 4.5
+retail |>
+  group_by(month, day) |>
+  summarise(avg_revenue = mean(sales_revenue_usd, na.rm = TRUE), .groups = "drop") |>
+  ggplot(aes(month, day, fill = avg_revenue)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "#EEF2EA", high = "#23351F",
+                      labels = label_dollar()) +
+  labs(x = NULL, y = NULL, fill = "Avg Revenue")
 ```
 
-## RO1: Summary by Discount Group
+## RO1: Seasonal Summary
 
 ```{r}
 #| label: ro1-table
 #| code-fold: true
-ro1_summary |>
-  mutate(
-    avg_units_sold = round(avg_units_sold, 2),
-    avg_revenue    = dollar(avg_revenue, accuracy = 0.01)
+retail |>
+  group_by(season) |>
+  summarise(
+    transactions = n(),
+    avg_revenue  = mean(sales_revenue_usd, na.rm = TRUE),
+    avg_units    = mean(units_sold, na.rm = TRUE),
+    .groups = "drop"
   ) |>
-  kable(col.names = c("Discount Group", "Transactions", "Avg Units Sold", "Avg Revenue"))
+  mutate(avg_revenue = dollar(avg_revenue, accuracy = 0.01),
+         avg_units   = round(avg_units, 2)) |>
+  kable(col.names = c("Season", "Transactions", "Avg Revenue", "Avg Units"))
 ```
 
-## RO2: Marketing Spend — Lead: \_\_\_\_\_\_
+# Research Objective Plans {background-color="#23351F"}
 
-- **IV:** Marketing Spend (USD)
-- **DV:** Sales Revenue
-- **Wrangling plan:** flag zero-spend vs. positive-spend transactions; create spend tiers
-- **Visualization plan:** scatterplot of spend vs. revenue with trend line; tier comparison bars
+## RO2: Discounts & Units Sold — Lead: \_\_\_\_\_\_
 
-## RO3: Discounting — Lead: \_\_\_\_\_\_
+- **Objective:** Analyze whether higher discount percentages are associated with higher units sold
+- **IV:** Discount Percentage · **DV:** Units Sold
+- **Controls:** Product Category, Store Location, Day of Week, Holiday Effect
+- **Wrangling plan:** clean discount variable; group into No / Low / High discount; summarize units sold by group
+- **Visualization plan:** scatterplot with trend line; boxplot of units sold by discount group; bar chart of average units sold by group
 
-- **IV:** Discount Percentage
-- **DVs:** Units Sold, Sales Revenue
-- **Wrangling plan:** bin discounts (none / low / medium / high); compare distributions across bins
-- **Visualization plan:** boxplots of units sold by discount bin; discount vs. revenue scatter
+## RO3: Discounts & Revenue — Lead: \_\_\_\_\_\_
 
-## RO4: Holidays & Timing — Lead: \_\_\_\_\_\_
+- **Objective:** Examine whether discounts increase sales revenue
+- **IV:** Discount Percentage · **DV:** Sales Revenue (USD)
+- **Controls:** Units Sold, Product Category, Marketing Spend
+- **Wrangling plan:** create discount groups; summarize average and total revenue by discount group
+- **Visualization plan:** bar chart of average revenue by discount group; scatterplot of discount percentage vs. sales revenue
 
-- **IVs:** Holiday Effect, Day of the Week
-- **DVs:** Sales Revenue, Units Sold
-- **Wrangling plan:** confirm factor levels; order days Mon–Sun; group and summarize by holiday flag and day
-- **Visualization plan:** grouped bar chart of average revenue by day, split by holiday vs. non-holiday
+## RO4: Category Differences — Lead: \_\_\_\_\_\_
 
-## RO5: Category & Location — Lead: \_\_\_\_\_\_
+- **Objective:** Compare the effect of discounts across product categories
+- **IV:** Discount Percentage · **DV:** Units Sold / Sales Revenue
+- **Moderator:** Product Category (Clothing, Electronics, Furniture, Groceries)
+- **Wrangling plan:** group records by product category and discount group; compute average revenue and units sold
+- **Visualization plan:** faceted bar charts by category; category-level comparison table; grouped bar chart
 
-- **IVs:** Product Category, Store Location
-- **DVs:** Sales Revenue, Units Sold
-- **Wrangling plan:** summarize revenue/units by category and location; identify top and bottom performers
-- **Visualization plan:** faceted bar charts by location; category heatmap
+## RO5: Marketing Spend Interaction — Lead: \_\_\_\_\_\_
+
+- **Objective:** Analyze whether marketing spend strengthens the impact of discounts
+- **IVs:** Discount Percentage, Marketing Spend (USD) · **DV:** Sales Revenue / Units Sold
+- **Possible interaction:** Discount Percentage × Marketing Spend
+- **Wrangling plan:** create marketing spend groups; summarize outcomes by marketing group and discount group; optional interaction model
+- **Visualization plan:** scatterplot of marketing spend vs. sales; grouped bar chart by discount group; interaction plot
 
 # Conclusion {background-color="#23351F"}
 
-## Conclusion
+## Planned Analysis & Expected Contribution
 
-::: callout-note
-## Group: draft together
+- **Procedure:** wrangle once (shared setup), then group summaries and visualizations per RO; optional model direction — regression of units/revenue on discount, marketing spend, and controls
+- **What the audience gains:**
+  - When discounts are useful vs. when they erode revenue efficiency
+  - Which product categories respond to discounts
+  - Whether marketing spend amplifies discount effects
+  - How seasonal and holiday timing shapes discount performance
+- **Deliverable becomes actionable:** discount levels, category priorities, marketing pairing, and a seasonal promotion calendar
 
-- Restate the problem and the five ROs in one or two lines
-- What the client gains: a data-driven view of seasonality, promotion effectiveness, and category/location performance
-- Next steps toward Ch4 (Results) and Ch5 (Recommendations)
-:::
+## Conclusion & Next Steps
+
+- **Problem:** discounts drive volume but may erode revenue — retailers need evidence, not habit
+- **Approach:** five ROs covering timing, volume, revenue, category, and marketing interaction on 30,000 retail transactions
+- **Next steps toward Ch4 (Results) and Ch5 (Recommendations):** each lead finalizes summaries, visualizations, and interpretation for their RO
 
 ## Thank You
 

@@ -1,7 +1,7 @@
 ---
 title: "IBM 6540 Group Project"
 subtitle: "Group 1"
-author: "Jake Evans"
+author: "Mickyas Shawel"
 institute: "Cal Poly Pomona — MSDM"
 date: today
 format:
@@ -15,10 +15,10 @@ format:
 
 ## About This File
 
-- **Name:** Jake Evans
-- **Group:** 1
-- **Course:** IBM 6540 — Applied Machine Learning for Marketing
-- **Purpose:** Individual member file for the group project repository
+-   **Name:** Mickyas Shawel
+-   **Group:** 1
+-   **Course:** IBM 6540 — Applied Machine Learning for Marketing
+-   **Purpose:** Individual member file for the group project repository
 
 ## Group GitHub Repository
 
@@ -32,4 +32,4 @@ The group project repository, including the data file and group presentation, is
 
 Rendered with Quarto RevealJS
 
-Jake Evans — Group 1
+Mickyas Shawel— Group 1
