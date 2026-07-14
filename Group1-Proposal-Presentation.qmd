@@ -67,7 +67,7 @@ retail <- read_csv(data_path) |>
 |----------------|---------|
 | Jake Evans     | RO 1    |
 | Mickyas Shawel | RO \_\_ |
-| Aldo Naranjo   | RO \_\_ |
+| Aldo Naranjo   | RO 2    |
 | Luis Berumen   | RO 3    |
 | Tim Arana      | RO \_\_ |
 
