@@ -68,7 +68,7 @@ retail <- read_csv(data_path) |>
 | Jake Evans     | RO 1    |
 | Mickyas Shawel | RO \_\_ |
 | Aldo Naranjo   | RO \_\_ |
-| Luis Berumen   | RO \_\_ |
+| Luis Berumen   | RO 3    |
 | Tim Arana      | RO \_\_ |
 
 ::: aside
@@ -107,7 +107,7 @@ Each member leads one RO — confirm assignments on slide 2.
 ## Background & Hypothesis Directions
 
 | RO | Hypothesis Direction |
-|----|----------------------|
+|------------------|------------------------------------------------------|
 | RO1 | Revenue and units will vary by season, with holiday periods outperforming regular periods |
 | RO2 | Higher discount percentages will be associated with higher units sold |
 | RO3 | Discounts may lift revenue up to a point, but higher discounts may not produce proportional gains |
@@ -226,13 +226,172 @@ retail |>
 - **Wrangling plan:** clean discount variable; group into No / Low / High discount; summarize units sold by group
 - **Visualization plan:** scatterplot with trend line; boxplot of units sold by discount group; bar chart of average units sold by group
 
-## RO3: Discounts & Revenue — Lead: \_\_\_\_\_\_
+# RO3: Discounts & Revenue — Lead: Luis Berumen
 
-- **Objective:** Examine whether discounts increase sales revenue
-- **IV:** Discount Percentage · **DV:** Sales Revenue (USD)
+## RO3: Plan
+
+- **Objective:** Examine the relationship between discount percentage and sales revenue.
+- **IV:** Discount Percentage
+- **DV:** Sales Revenue (USD)
 - **Controls:** Units Sold, Product Category, Marketing Spend
-- **Wrangling plan:** create discount groups; summarize average and total revenue by discount group
-- **Visualization plan:** bar chart of average revenue by discount group; scatterplot of discount percentage vs. sales revenue
+- **Wrangling:** Create discount groups; calculate transaction count, average revenue, and total revenue.
+- **Visualizations:** Scatterplot, grouped bar chart, and revenue summary table.
+
+::: {.notes}
+Research Objective 3 examines the relationship between discount percentage and
+sales revenue.
+
+The independent variable is discount percentage, and the dependent variable is
+sales revenue. Units sold, product category, and marketing spend are included as
+control variables because they may also influence revenue.
+
+For data preparation, transactions are grouped into no discount, low discount,
+and high discount categories. We then calculate the number of transactions,
+average revenue, and total revenue for each group.
+
+The planned visualizations include a scatterplot to examine the overall
+relationship, a grouped bar chart to compare the relationship across product
+categories, and a summary table to provide the numerical results.
+:::
+
+## RO3: Discount Percentage vs. Sales Revenue
+
+```{r}
+#| label: ro3-scatter
+#| code-fold: true
+#| fig-height: 4.5
+
+retail |>
+  ggplot(aes(discount_percentage, sales_revenue_usd)) +
+  geom_jitter(alpha = 0.15,
+              width = 0.3,
+              height = 0,
+              color = "#23351F") +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "#D9A441",
+    linewidth = 1
+  ) +
+  scale_y_continuous(labels = label_dollar()) +
+  scale_x_continuous(labels = label_percent(scale = 1)) +
+  labs(
+    x = "Discount Percentage",
+    y = "Sales Revenue (USD)"
+  )
+```
+
+::: {.notes}
+This scatterplot provides the broadest view of the relationship between discount
+percentage and sales revenue.
+
+The x-axis represents the discount percentage applied to each transaction, while
+the y-axis represents the sales revenue generated from that transaction. Each
+point corresponds to one retail sale.
+
+Because the dataset contains thousands of observations, the points show the
+overall distribution of the data, while the fitted trend line summarizes the
+general relationship.
+
+If the trend line slopes upward, it suggests that higher discount percentages
+tend to be associated with higher sales revenue. If it slopes downward, larger
+discounts may be associated with lower revenue. A relatively flat trend line
+would suggest little overall relationship between discount percentage and sales
+revenue.
+
+This chart helps us evaluate both the direction and strength of the relationship
+across the entire dataset.
+:::
+
+## RO3: Revenue by Product Category and Discount Group
+
+```{r}
+#| label: ro3-category
+#| code-fold: true
+#| fig-height: 4.5
+
+retail |>
+  group_by(product_category, discount_group) |>
+  summarise(
+    avg_revenue = mean(sales_revenue_usd, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(product_category, avg_revenue, fill = discount_group)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = label_dollar()) +
+  scale_fill_manual(values = c(
+    "No discount" = "#4E6E8E",
+    "Low (1–10%)" = "#D9A441",
+    "High (11–20%)" = "#23351F"
+  )) +
+  labs(
+    x = NULL,
+    y = "Average Revenue (USD)",
+    fill = NULL
+  )
+```
+
+::: {.notes}
+This grouped bar chart explores whether the relationship between discount
+percentage and sales revenue is consistent across different product categories.
+
+The x-axis displays each product category, while the colored bars represent the
+three discount groups. The height of each bar represents the average sales
+revenue for that combination of product category and discount level.
+
+By comparing the bars within the same category, we can evaluate whether higher
+discount percentages are associated with changes in average revenue for that
+specific product type. Comparing across categories helps determine whether the
+relationship differs between Electronics, Furniture, Clothing, and Groceries.
+
+Including product category as a control variable provides additional context and
+helps us determine whether the relationship between discounts and revenue is
+consistent across different types of products.
+:::
+
+## RO3: Revenue Summary
+
+```{r}
+#| label: ro3-table
+#| code-fold: true
+
+retail |>
+  group_by(discount_group) |>
+  summarise(
+    transactions = n(),
+    avg_revenue = mean(sales_revenue_usd, na.rm = TRUE),
+    total_revenue = sum(sales_revenue_usd, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    avg_revenue = dollar(avg_revenue),
+    total_revenue = dollar(total_revenue)
+  ) |>
+  kable(
+    col.names = c(
+      "Discount Group",
+      "Transactions",
+      "Avg Revenue",
+      "Total Revenue"
+    )
+  )
+```
+
+::: {.notes}
+This summary table provides the numerical statistics that support the previous
+visualizations.
+
+For each discount group, the table reports the number of transactions, the
+average revenue per transaction, and the total revenue generated.
+
+The transaction count helps us understand the size of each discount group, while
+the average revenue allows us to compare typical sales across discount levels.
+Total revenue provides a broader view of overall performance.
+
+Together, these summary statistics complement the charts and help us evaluate
+the relationship between discount percentage and sales revenue from both a
+transaction-level and an overall business perspective.
+:::
 
 ## RO4: Category Differences — Lead: \_\_\_\_\_\_
 
