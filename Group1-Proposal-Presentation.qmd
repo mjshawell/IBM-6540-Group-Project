@@ -67,7 +67,7 @@ retail <- read_csv(data_path) |>
 |----------------|---------|
 | Jake Evans     | RO 1    |
 | Mickyas Shawel | RO \_\_ |
-| Aldo Naranjo   | RO \_\_ |
+| Aldo Naranjo   | RO 2    |
 | Luis Berumen   | RO 3    |
 | Tim Arana      | RO 4 |
 
@@ -218,13 +218,144 @@ retail |>
 
 # Research Objective Plans {background-color="#23351F"}
 
-## RO2: Discounts & Units Sold — Lead: \_\_\_\_\_\_
+# RO2: Discounts & Units Sold — Lead: Aldo Naranjo {background-color="#23351F"}
+
+## RO2: Plan
 
 - **Objective:** Analyze whether higher discount percentages are associated with higher units sold
-- **IV:** Discount Percentage · **DV:** Units Sold
+- **IV:** Discount Percentage
+- **DV:** Units Sold
 - **Controls:** Product Category, Store Location, Day of Week, Holiday Effect
-- **Wrangling plan:** clean discount variable; group into No / Low / High discount; summarize units sold by group
-- **Visualization plan:** scatterplot with trend line; boxplot of units sold by discount group; bar chart of average units sold by group
+- **Wrangling:** use existing `discount_group` variable (No / Low / High); summarize units sold by group
+- **Visualizations:** scatterplot with trend line, boxplot by discount group, bar chart of average units sold
+
+::: {.notes}
+Research Objective 2 examines the relationship between discount percentage and
+units sold.
+
+The independent variable is discount percentage, and the dependent variable is
+units sold. Product category, store location, day of week, and holiday effect
+are included as control variables since they may also affect how many units
+are sold in a transaction.
+
+For data preparation, we reuse the discount group variable already created for
+the shared setup, grouping transactions into no discount, low discount, and
+high discount categories. We then summarize units sold within each group.
+
+The planned visualizations include a scatterplot to see the overall
+relationship, a boxplot to compare the distribution of units sold across
+discount groups, and a bar chart summarizing average units sold per group.
+:::
+
+## RO2: Discount Percentage vs. Units Sold
+
+```{r}
+#| label: ro2-scatter
+#| code-fold: true
+#| fig-height: 4.5
+
+retail |>
+  ggplot(aes(discount_percentage, units_sold)) +
+  geom_jitter(alpha = 0.15,
+              width = 0.3,
+              height = 0,
+              color = "#23351F") +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "#D9A441",
+    linewidth = 1
+  ) +
+  scale_x_continuous(labels = label_percent(scale = 1)) +
+  labs(
+    x = "Discount Percentage",
+    y = "Units Sold"
+  )
+```
+
+::: {.notes}
+This scatterplot shows the overall relationship between discount percentage
+and units sold across all transactions.
+
+The x-axis represents the discount percentage applied to a transaction, and
+the y-axis represents the number of units sold in that transaction. Each point
+is one retail sale, and the fitted trend line summarizes the general pattern
+across thousands of observations.
+
+An upward-sloping trend line would suggest that larger discounts are
+associated with more units sold. A flat or downward-sloping line would suggest
+discounts have little effect, or even a negative one, on unit volume.
+:::
+
+## RO2: Units Sold by Discount Group
+
+```{r}
+#| label: ro2-boxplot
+#| code-fold: true
+#| fig-height: 4.5
+
+retail |>
+  ggplot(aes(discount_group, units_sold, fill = discount_group)) +
+  geom_boxplot(show.legend = FALSE) +
+  scale_fill_manual(values = c(
+    "No discount" = "#4E6E8E",
+    "Low (1–10%)" = "#D9A441",
+    "High (11–20%)" = "#23351F"
+  )) +
+  labs(
+    x = NULL,
+    y = "Units Sold"
+  )
+```
+
+::: {.notes}
+This boxplot compares the distribution of units sold across the three
+discount groups: no discount, low discount, and high discount.
+
+Rather than just comparing averages, the boxplot shows the spread and median
+of units sold within each group, which helps identify whether higher discount
+levels shift the whole distribution upward or simply increase variability.
+:::
+
+## RO2: Average Units Sold Summary
+
+```{r}
+#| label: ro2-table
+#| code-fold: true
+
+retail |>
+  group_by(discount_group) |>
+  summarise(
+    transactions = n(),
+    avg_units = mean(units_sold, na.rm = TRUE),
+    total_units = sum(units_sold, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(avg_units = round(avg_units, 2)) |>
+  kable(
+    col.names = c(
+      "Discount Group",
+      "Transactions",
+      "Avg Units Sold",
+      "Total Units Sold"
+    )
+  )
+```
+
+::: {.notes}
+This summary table provides the numerical results supporting the previous
+charts.
+
+For each discount group, the table reports the number of transactions, the
+average units sold per transaction, and the total units sold. The average
+units sold column lets us directly compare typical order sizes across
+discount levels, while total units sold shows overall volume contributed by
+each group.
+
+Together with the scatterplot and boxplot, this table helps determine whether
+higher discount percentages are actually associated with meaningfully higher
+unit sales, which directly addresses Research Objective 2.
+:::
 
 # RO3: Discounts & Revenue — Lead: Luis Berumen
 
