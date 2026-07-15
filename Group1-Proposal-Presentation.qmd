@@ -69,7 +69,7 @@ retail <- read_csv(data_path) |>
 | Mickyas Shawel | RO \_\_ |
 | Aldo Naranjo   | RO \_\_ |
 | Luis Berumen   | RO 3    |
-| Tim Arana      | RO \_\_ |
+| Tim Arana      | RO 4 |
 
 ::: aside
 Dataset: [Retail Sales Data with Seasonal Trends & Marketing (Kaggle)](https://www.kaggle.com/datasets/abdullah0a/retail-sales-data-with-seasonal-trends-and-marketing) · Repo: <https://github.com/mjshawell/IBM-6540-Group-Project>
@@ -393,13 +393,110 @@ the relationship between discount percentage and sales revenue from both a
 transaction-level and an overall business perspective.
 :::
 
-## RO4: Category Differences — Lead: \_\_\_\_\_\_
+# RO4: Category Differences — Lead: Tim Arana {background-color="#23351F"}
 
-- **Objective:** Compare the effect of discounts across product categories
-- **IV:** Discount Percentage · **DV:** Units Sold / Sales Revenue
-- **Moderator:** Product Category (Clothing, Electronics, Furniture, Groceries)
-- **Wrangling plan:** group records by product category and discount group; compute average revenue and units sold
-- **Visualization plan:** faceted bar charts by category; category-level comparison table; grouped bar chart
+## RO4: Plan
+
+- **Objective:** Compare whether discount effects differ across product categories
+- **IV:** Discount Percentage / Discount Group
+- **DVs:** Units Sold and Sales Revenue
+- **Moderator:** Product Category
+- **Wrangling:** group records by product category and discount group; compute average units sold and average revenue
+- **Visualization:** grouped bar charts and category-level comparison table
+
+## RO4: Average Units Sold by Category and Discount Group
+
+```{r}
+#| label: ro4-units-category
+#| code-fold: true
+#| fig-height: 4.5
+
+retail |>
+  group_by(product_category, discount_group) |>
+  summarise(
+    avg_units = mean(units_sold, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(product_category, avg_units, fill = discount_group)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = c(
+    "No discount" = "#4E6E8E",
+    "Low (1–10%)" = "#D9A441",
+    "High (11–20%)" = "#23351F"
+  )) +
+  labs(
+    x = NULL,
+    y = "Average Units Sold",
+    fill = NULL
+  )
+```
+
+## RO4: Average Revenue by Category and Discount Group
+
+```{r}
+#| label: ro4-revenue-category
+#| code-fold: true
+#| fig-height: 4.5
+
+retail |>
+  group_by(product_category, discount_group) |>
+  summarise(
+    avg_revenue = mean(sales_revenue_usd, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(product_category, avg_revenue, fill = discount_group)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = label_dollar()) +
+  scale_fill_manual(values = c(
+    "No discount" = "#4E6E8E",
+    "Low (1–10%)" = "#D9A441",
+    "High (11–20%)" = "#23351F"
+  )) +
+  labs(
+    x = NULL,
+    y = "Average Revenue (USD)",
+    fill = NULL
+  )
+```
+
+## RO4: Category-Level Summary
+
+```{r}
+#| label: ro4-summary-table
+#| code-fold: true
+
+retail |>
+  group_by(product_category, discount_group) |>
+  summarise(
+    transactions = n(),
+    avg_units = mean(units_sold, na.rm = TRUE),
+    avg_revenue = mean(sales_revenue_usd, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    avg_units = round(avg_units, 2),
+    avg_revenue = dollar(avg_revenue)
+  ) |>
+  kable(
+    col.names = c(
+      "Product Category",
+      "Discount Group",
+      "Transactions",
+      "Avg Units",
+      "Avg Revenue"
+    )
+  )
+```
+
+::: {.notes}
+RO4 examines whether discounts work the same way across product categories.
+
+The main independent variable is discount group, while the dependent variables are average units sold and average sales revenue. Product category acts as a moderator because discounts may affect categories differently.
+
+The first chart compares average units sold by discount group within each category. The second chart compares average revenue using the same structure. The summary table provides the supporting numbers.
+
+This helps the retail audience avoid treating all products the same. If some categories respond better to discounts than others, the company can prioritize promotions for the categories where discounts create stronger sales or revenue outcomes.
+:::
 
 ## RO5: Marketing Spend Interaction — Lead: \_\_\_\_\_\_
 
