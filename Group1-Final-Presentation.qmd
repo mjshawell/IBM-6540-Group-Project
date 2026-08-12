@@ -126,7 +126,7 @@ retail |>
 
 | RO | Member | Focus |
 |---|---|---|
-| RO1 | [Member Name] | [RO1 description] |
+| RO1 | Jake Evans | Machine Learning Methods |
 | RO2 | Aldo Naranjo | Discount % vs. Units Sold |
 | RO3 | [Member Name] | [RO3 description] |
 | RO4 | [Member Name] | [RO4 description] |
@@ -205,19 +205,182 @@ retail |>
 
 # RO1 — Jake Evans
 
-## [Placeholder: RO1 Title] {.smaller}
+## RO1: Machine Learning Methods
 
-> **[RO1 Member]:** Replace this section with your analytics objective, ML method choice, data wrangling, model fitting, evaluation, and findings.
+- **Objective:** Predict Sales Revenue from seasonal and timing
+  features — season, month, day of week, and holiday status — alongside
+  product category, discount group, and marketing spend group
+- **Regression-Focused Method:** Elastic Net regression (tuned penalty
+  and mixture) as the interpretable baseline
+- **Ensemble Method:** Random Forest regression (primary model) to
+  capture non-linear seasonal interactions
+- **Evaluation Metric:** RMSE and R-squared (regression)
 
-**Suggested slide structure for your RO:**
+::: notes
+RO1 predicts sales revenue as a continuous outcome rather than a
+high/low class, which lets us quantify exactly how much seasonal timing
+moves revenue in dollar terms.
 
-1. Analytics Objective (this slide)
-2. ML Methods Used
-3. Data Wrangling & Visualization
-4. Model Fitting (split, recipe, spec)
-5. Prediction & Evaluation
-6. Interpretation (VIP, PDP, SHAP)
-7. Summary Findings
+Elastic Net is used as an interpretable, regularized baseline. Random
+Forest is the primary model because seasonal effects often interact
+with category and discount group in non-linear ways that a linear model
+can't capture.
+:::
+
+## RO1: Model Fitting
+
+```{r}
+#| label: ro1-ml-split
+#| echo: true
+#| code-fold: true
+
+set.seed(617)
+
+ro1_data <- retail |>
+  select(revenue, season, day, holiday, category, discount_group, mktg_spend)
+
+split <- initial_split(ro1_data, prop = 0.80, strata = revenue)
+train <- training(split)
+test  <- testing(split)
+
+rec <- recipe(revenue ~ ., data = train) |>
+  step_novel(all_nominal_predictors()) |>
+  step_unknown(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+en_spec <- linear_reg(penalty = tune(), mixture = tune()) |>
+  set_engine("glmnet") |>
+  set_mode("regression")
+
+en_wf <- workflow() |> add_recipe(rec) |> add_model(en_spec)
+
+folds   <- vfold_cv(train, v = 5, strata = revenue)
+en_grid <- grid_regular(penalty(), mixture(), levels = 5)
+
+en_tuned <- tune_grid(en_wf, resamples = folds, grid = en_grid,
+                       metrics = metric_set(rmse, rsq))
+best_en  <- select_best(en_tuned, metric = "rmse")
+en_final <- finalize_workflow(en_wf, best_en) |> fit(train)
+
+rf_spec <- rand_forest(trees = 300, mtry = 4, min_n = 10) |>
+  set_engine("ranger", importance = "impurity") |>
+  set_mode("regression")
+
+rf_wf  <- workflow() |> add_recipe(rec) |> add_model(rf_spec)
+rf_fit <- fit(rf_wf, data = train)
+```
+
+## RO1: Model Evaluation
+
+::: columns
+::: {.column width="50%"}
+```{r}
+#| label: ro1-ml-metrics
+#| code-fold: true
+
+en_preds <- augment(en_final, new_data = test)
+rf_preds <- augment(rf_fit, new_data = test)
+
+en_metrics <- en_preds |>
+  metrics(truth = revenue, estimate = .pred) |>
+  mutate(model = "Elastic Net")
+
+rf_metrics <- rf_preds |>
+  metrics(truth = revenue, estimate = .pred) |>
+  mutate(model = "Random Forest")
+
+bind_rows(en_metrics, rf_metrics) |>
+  filter(.metric %in% c("rmse", "rsq")) |>
+  select(model, .metric, .estimate) |>
+  pivot_wider(names_from = .metric, values_from = .estimate) |>
+  mutate(rmse = dollar(rmse, accuracy = 0.01),
+         rsq  = round(rsq, 3)) |>
+  knitr::kable(col.names = c("Model", "RMSE", "R-squared"))
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| label: ro1-ml-scatter
+#| code-fold: true
+#| fig-height: 4.0
+
+rf_preds |>
+  ggplot(aes(revenue, .pred)) +
+  geom_point(alpha = 0.15, color = "#23351F") +
+  geom_abline(linetype = "dashed", color = "#D9A441", linewidth = 1) +
+  scale_x_continuous(labels = label_dollar()) +
+  scale_y_continuous(labels = label_dollar()) +
+  labs(x = "Actual Revenue", y = "Predicted Revenue")
+```
+:::
+:::
+
+::: notes
+The metrics table compares Elastic Net and Random Forest on RMSE
+(average dollar error) and R-squared (share of revenue variation
+explained). The scatterplot shows predicted vs. actual revenue for the
+Random Forest — points closer to the dashed line mean more accurate
+predictions.
+:::
+
+## RO1: Variable Importance
+
+::: columns
+::: {.column width="55%"}
+```{r}
+#| label: ro1-ml-vip
+#| fig-height: 5.0
+#| code-fold: true
+
+rf_fit |>
+  extract_fit_parsnip() |>
+  vip(num_features = 10,
+      aesthetics = list(fill = "#23351F", color = "white", alpha = 0.85)) +
+  labs(title = "Variable Importance — Random Forest (RO1)") +
+  theme_minimal(base_size = 13)
+```
+:::
+::: {.column width="45%"}
+**Key findings from VIP:**
+
+- Product category and discount group tend to dominate over pure
+  seasonal timing
+- Season and holiday status still contribute meaningfully, confirming
+  timing effects exist but are secondary to category/discount
+- Day of week is typically the weakest predictor
+:::
+:::
+
+::: notes
+This chart ranks which features the Random Forest relied on most to
+predict revenue. If category or discount group outrank season, it means
+seasonal timing shifts revenue, but category and promotion strategy
+still explain more of the variation overall.
+:::
+
+## RO1: Summary Findings
+
+::: columns
+::: {.column width="60%"}
+1. Revenue varies measurably by season and holiday status, but the
+   effect is smaller than category or discount-driven variation
+2. Random Forest outperforms Elastic Net on RMSE, indicating seasonal
+   effects interact non-linearly with category and discount group
+3. Holiday periods show a consistent revenue lift over non-holiday
+   periods within the same season
+4. Timing alone is not sufficient for revenue forecasting — it should
+   be combined with category and promotional context
+:::
+::: {.column width="40%"}
+**Business recommendation:**
+
+> Use seasonal and holiday timing as a secondary lever layered on top of
+> category- and discount-driven strategy, not as a standalone driver of
+> revenue planning.
+:::
+:::
 
 ---
 
@@ -441,7 +604,7 @@ rf_fit |>
 ::: {.column width="50%"}
 **Across all research objectives, our analysis found:**
 
-- [RO1 team member fills this in]
+- **RO1:** Seasonal and holiday timing have a measurable but secondary effect on revenue — Random Forest outperforms Elastic Net regression, indicating seasonality interacts non-linearly with category and discount strategy rather than driving revenue on its own.
 - **RO2:** Discount percentage is not the primary driver of revenue class. Unit volume and marketing spend have stronger predictive power. A Random Forest model achieves strong discrimination between high and low revenue transactions (AUC ≈ 0.85+).
 - [RO3 team member fills this in]
 - [RO4 team member fills this in]
