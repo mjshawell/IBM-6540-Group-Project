@@ -206,7 +206,7 @@ retail <- read_excel("Retail_sales.xlsx") |>
 
 # Introduction
 
-## Problem Definition {.smaller}
+## Problem Definition
 
 ::::: columns
 ::: {.column width="55%"}
@@ -238,10 +238,11 @@ retail |>
 :::
 :::::
 
-## Research Objectives {.smaller}
+## Research Objectives
 
 ::::: columns
 ::: {.column width="50%"}
+
 **Five research objectives guide our analysis:**
 
 | RO  | Member          | Focus                         |
@@ -251,17 +252,19 @@ retail |>
 | RO3 | Luis Berumen    | Discounts & Sales Revenue     |
 | RO4 | Tim Arana       | Sales Revenue Prediction      |
 | RO5 | Mickyas Shawel  | Marketing Spend Interaction   |
-:::
+
 :::
 
 ::: {.column width="50%"}
+
 **Our overarching analytics objective:**
 
 > Build supervised machine learning models that predict retail sales performance from discount strategy, marketing spend, product category, and seasonal features using 30,000 transaction-level records from 2022 to 2024.
+
 :::
 :::::
 
-## Why This Research Matters {.smaller}
+## Why This Research Matters 
 
 - **For retailers:** Discounting is one of the most common promotional tools, but the margin impact is often unclear. Understanding the revenue consequences of different discount levels by category and season allows more precise promotional planning.
 
@@ -271,7 +274,7 @@ retail |>
 
 # Population & Sample
 
-## Population and Sample {.smaller}
+## Population and Sample 
 
 :::::: columns
 :::: {.column width="50%"}
@@ -300,7 +303,7 @@ retail |>
 :::
 ::::::
 
-## Sample Characteristics {.smaller}
+## Sample Characteristics
 
 ```{r}
 retail |>
@@ -507,7 +510,7 @@ still explain more of the variation overall.
 
 # RO2 — Aldo Naranjo
 
-## RO2: Do Discounts Drive Unit Sales? {.smaller}
+## RO2: Do Discounts Drive Unit Sales? 
 
 **Analytics Objective:** Predict whether a retail transaction generates above- or below-median revenue (`high` vs. `low`) using discount percentage, marketing spend, units sold, product category, season, and holiday status.
 
@@ -540,7 +543,7 @@ retail |>
 :::
 :::::
 
-## RO2: Data Wrangling & EDA {.smaller}
+## RO2: Data Wrangling & EDA 
 
 ```{r}
 #| fig-height: 3.8
@@ -572,7 +575,7 @@ p2 <- retail |>
 p1 + p2
 ```
 
-## RO2: Model Fitting {.smaller}
+## RO2: Model Fitting 
 
 ```{r}
 #| echo: true
@@ -600,7 +603,7 @@ rf_wf  <- workflow() |> add_recipe(rec) |> add_model(rf_spec)
 rf_fit <- fit(rf_wf, data = train)
 ```
 
-## RO2: Model Evaluation {.smaller}
+## RO2: Model Evaluation 
 
 ::::: columns
 ::: {.column width="50%"}
@@ -645,7 +648,7 @@ metrics_tbl |>
 :::
 :::::
 
-## RO2: Variable Importance {.smaller}
+## RO2: Variable Importance 
 
 ::::: columns
 ::: {.column width="55%"}
@@ -673,7 +676,7 @@ rf_fit |>
 :::
 :::::
 
-## RO2: Summary Findings {.smaller}
+## RO2: Summary Findings 
 
 ::::: columns
 ::: {.column width="60%"}
@@ -699,7 +702,7 @@ rf_fit |>
 
 # RO3 — Luis Berumen
 
-## RO3: Do Discounts Increase Sales Revenue? {.smaller}
+## RO3: Do Discounts Increase Sales Revenue?
 
 **Analytics Objective:** Examine the relationship between discount percentage and Sales Revenue using regression models. Units Sold, Product Category, Marketing Spend, season, day of week, and holiday status are also included to determine whether Discount Percentage is an important predictor of Sales Revenue.
 
@@ -758,7 +761,7 @@ retail |>
 RO3 asks whether discounts increase sales revenue. Discount percentage is the main variable of interest and sales revenue is the outcome. Units sold, product category, marketing spend, and other available variables are included because they may also be related to revenue. Regression models are used to examine these variables together and determine how useful discount percentage is for predicting sales revenue.
 :::
 
-## RO3: Data Wrangling & EDA {.smaller}
+## RO3: Data Wrangling & EDA 
 
 ::::: columns
 ::: {.column width="55%"}
@@ -836,7 +839,7 @@ retail |>
 The first part of RO3 looks at the relationship between discounts and revenue before fitting the models. The scatterplot shows the overall relationship between discount percentage and sales revenue. The category comparison and summary table show whether average revenue changes across discount levels and product categories.
 :::
 
-## RO3: Model Fitting {.smaller}
+## RO3: Model Fitting 
 
 ```{r}
 #| label: ro3-model-fitting
@@ -986,7 +989,7 @@ ro3_final_fit <-
 The data are split into 80% training data and 20% testing data. The training data are used to build and compare the models, while the testing data are saved for the final evaluation. OLS, Ridge, Lasso, and Elastic Net regression are compared. Elastic Net is tuned using 10-fold cross-validation to find the model settings that give the lowest prediction error.
 :::
 
-## RO3: Model Evaluation {.smaller}
+## RO3: Model Evaluation 
 
 ::::: columns
 ::: {.column width="55%"}
@@ -1126,7 +1129,7 @@ ro3_test_metrics |>
 The models are compared to determine which one gives the best predictions for sales revenue. RMSE and MAE show the amount of prediction error, so lower values are better. R-squared shows how much of the variation in sales revenue is explained by the model, so a higher value is better. The final model is then evaluated using the testing data.
 :::
 
-## RO3: Feature Importance {.smaller}
+## RO3: Feature Importance 
 
 ::::: columns
 ::: {.column width="55%"}
@@ -1186,7 +1189,7 @@ ro3_importance |>
 :::
 :::::
 
-## RO3: Summary Findings {.smaller}
+## RO3: Summary Findings 
 
 ::::: columns
 ::: {.column width="60%"}
@@ -1215,7 +1218,7 @@ ro3_importance |>
 
 # RO4 — Tim Arana
 
-## RO4: Predicting Sales Revenue {.smaller}
+## RO4: Predicting Sales Revenue
 
 ::: columns
 ::: {.column width="52%"}
@@ -1256,7 +1259,7 @@ Predict **Sales Revenue (USD)** and evaluate how **Product Category** and other 
 :::
 :::
 
-## RO4: Model Comparison {.smaller}
+## RO4: Model Comparison 
 
 ::: columns
 ::: {.column width="48%"}
@@ -1292,7 +1295,7 @@ Random Forest: 2,056.74
 :::
 :::
 
-## RO4: Model Interpretation {.smaller}
+## RO4: Model Interpretation 
 
 ::: columns
 ::: {.column width="50%"}
@@ -1321,7 +1324,7 @@ Random Forest: 2,056.74
 :::
 :::
 
-## RO4: Findings & Recommendation {.smaller}
+## RO4: Findings & Recommendation 
 
 ::: columns
 ::: {.column width="55%"}
@@ -1355,7 +1358,7 @@ Random Forest: 2,056.74
 
 # RO5 — Mickyas Shawel
 
-## RO5: Marketing Spend Interaction {.smaller}
+## RO5: Marketing Spend Interaction
 
 ::::: columns
 ::: {.column width="52%"}
@@ -1378,7 +1381,7 @@ Random Forest: 2,056.74
 :::
 :::::
 
-## RO5: Data Wrangling & Modeling Plan {.smaller}
+## RO5: Data Wrangling & Modeling Plan
 
 ::::: columns
 ::: {.column width="50%"}
@@ -1399,7 +1402,7 @@ The interaction term tests whether the discount effect changes at different leve
 :::
 :::::
 
-## RO5: Planned Visualizations & Insight {.smaller}
+## RO5: Planned Visualizations & Insight 
 
 ::::: columns
 ::: {.column width="50%"}
@@ -1421,7 +1424,7 @@ If the interaction is positive, retailers should pair discounts with stronger ma
 
 # Conclusion
 
-## Key Findings {.smaller}
+## Key Findings 
 
 ::::: columns
 ::: {.column width="50%"}
@@ -1454,7 +1457,7 @@ retail |>
 :::
 :::::
 
-## Recommendations for Businesses {.smaller}
+## Recommendations for Businesses 
 
 ::: incremental
 1.  **Rethink the discount-volume tradeoff.** Higher discounts increase units sold slightly but do not reliably push transactions into the high-revenue category. Margin protection should be prioritized over aggressive discounting in lower-margin categories.
