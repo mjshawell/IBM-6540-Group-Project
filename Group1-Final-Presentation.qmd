@@ -8,7 +8,6 @@ date-format: "MMMM D, YYYY"
 format:
   revealjs:
     theme: theme.scss
-    logo: "https://www.cpp.edu/brand/imgs/downloads/cpp-logo-gold.png"
     slide-number: true
     toc: true
     toc-depth: 1
@@ -245,13 +244,14 @@ retail |>
 ::: {.column width="50%"}
 **Five research objectives guide our analysis:**
 
-| RO  | Member          | Focus                       |
-|-----|-----------------|-----------------------------|
-| RO1 | \[Member Name\] | \[RO1 description\]         |
-| RO2 | Aldo Naranjo    | Discount % vs. Units Sold   |
-| RO3 | \[Member Name\] | \[RO3 description\]         |
-| RO4 | \[Member Name\] | \[RO4 description\]         |
-| RO5 | Mickyas Shawel  | Marketing Spend Interaction |
+| RO  | Member          | Focus                         |
+|-----|-----------------|-------------------------------|
+| RO1 | Jake Evans      | Seasonality & Holiday Effects |
+| RO2 | Aldo Naranjo    | Discount % vs. Units Sold     |
+| RO3 | Luis Berumen    | Discounts & Sales Revenue     |
+| RO4 | Tim Arana       | Sales Revenue Prediction      |
+| RO5 | Mickyas Shawel  | Marketing Spend Interaction   |
+:::
 :::
 
 ::: {.column width="50%"}
@@ -699,17 +699,657 @@ rf_fit |>
 
 # RO3 — Luis Berumen
 
-## \[Placeholder: RO3 Title\] {.smaller}
+## RO3: Do Discounts Increase Sales Revenue? {.smaller}
 
-> **\[RO3 Member\]:** Replace this section with your analytics objective, ML method choice, data wrangling, model fitting, evaluation, and findings.
+**Analytics Objective:** Examine the relationship between discount percentage and Sales Revenue using regression models. Units Sold, Product Category, Marketing Spend, season, day of week, and holiday status are also included to determine whether Discount Percentage is an important predictor of Sales Revenue.
+
+::::: columns
+::: {.column width="55%"}
+
+### ML Methods Used
+
+- OLS Linear Regression (baseline)
+- Ridge Regression
+- Lasso Regression
+- **Tuned Elastic Net (primary)**
+- 10-fold cross-validation for model comparison
+
+**Evaluation Metrics:** RMSE, MAE, and R-squared
+
+:::
+
+::: {.column width="45%"}
+
+```{r}
+#| label: ro3-discount-revenue
+#| fig-height: 4.5
+
+retail |>
+  ggplot(aes(discount_pct, revenue)) +
+  geom_jitter(
+    alpha = 0.10,
+    width = 0.25,
+    color = "#23351F"
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "#D9A441",
+    linewidth = 1.2
+  ) +
+  scale_x_continuous(
+    labels = label_percent(scale = 1)
+  ) +
+  scale_y_continuous(
+    labels = label_dollar()
+  ) +
+  labs(
+    title = "Discount % vs. Sales Revenue",
+    x = "Discount %",
+    y = "Sales Revenue (USD)"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+:::
+:::::
+
+::: notes
+RO3 asks whether discounts increase sales revenue. Discount percentage is the main variable of interest and sales revenue is the outcome. Units sold, product category, marketing spend, and other available variables are included because they may also be related to revenue. Regression models are used to examine these variables together and determine how useful discount percentage is for predicting sales revenue.
+:::
+
+## RO3: Data Wrangling & EDA {.smaller}
+
+::::: columns
+::: {.column width="55%"}
+
+```{r}
+#| label: ro3-category-discount
+#| fig-height: 5
+
+retail |>
+  group_by(category, discount_group) |>
+  summarise(
+    avg_revenue = mean(revenue, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(
+    aes(
+      category,
+      avg_revenue,
+      fill = discount_group
+    )
+  ) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c(
+      "#4E6E8E",
+      "#FFB81C",
+      "#00693D"
+    )
+  ) +
+  scale_y_continuous(
+    labels = label_dollar()
+  ) +
+  labs(
+    title = "Average Revenue by Category & Discount",
+    x = NULL,
+    y = "Average Revenue",
+    fill = "Discount"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "top")
+```
+
+:::
+
+::: {.column width="45%"}
+
+```{r}
+#| label: ro3-discount-summary
+
+retail |>
+  group_by(discount_group) |>
+  summarise(
+    Transactions = n(),
+    `Avg Revenue` = mean(revenue, na.rm = TRUE),
+    `Total Revenue` = sum(revenue, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    `Avg Revenue` = dollar(`Avg Revenue`),
+    `Total Revenue` = dollar(`Total Revenue`)
+  ) |>
+  gt() |>
+  tab_header(
+    title = "Revenue by Discount Group"
+  ) |>
+  tab_options(
+    table.font.size = px(16)
+  )
+```
+
+:::
+:::::
+
+::: notes
+The first part of RO3 looks at the relationship between discounts and revenue before fitting the models. The scatterplot shows the overall relationship between discount percentage and sales revenue. The category comparison and summary table show whether average revenue changes across discount levels and product categories.
+:::
+
+## RO3: Model Fitting {.smaller}
+
+```{r}
+#| label: ro3-model-fitting
+#| echo: true
+#| code-fold: true
+#| cache: true
+
+set.seed(617)
+
+ro3_data <-
+  retail |>
+  select(
+    revenue,
+    discount_pct,
+    units,
+    mktg_spend,
+    category,
+    day,
+    holiday,
+    season
+  )
+
+ro3_split <-
+  initial_split(
+    ro3_data,
+    prop = 0.80,
+    strata = revenue
+  )
+
+ro3_train <- training(ro3_split)
+ro3_test <- testing(ro3_split)
+
+ro3_rec <-
+  recipe(
+    revenue ~ .,
+    data = ro3_train
+  ) |>
+  step_impute_median(
+    all_numeric_predictors()
+  ) |>
+  step_novel(
+    all_nominal_predictors()
+  ) |>
+  step_unknown(
+    all_nominal_predictors()
+  ) |>
+  step_dummy(
+    all_nominal_predictors()
+  ) |>
+  step_normalize(
+    all_numeric_predictors()
+  ) |>
+  step_zv(
+    all_predictors()
+  )
+
+set.seed(617)
+
+ro3_folds <-
+  vfold_cv(
+    ro3_train,
+    v = 10,
+    strata = revenue
+  )
+
+ro3_ols_wf <-
+  workflow() |>
+  add_recipe(ro3_rec) |>
+  add_model(
+    linear_reg() |>
+      set_engine("lm")
+  )
+
+ro3_ridge_wf <-
+  workflow() |>
+  add_recipe(ro3_rec) |>
+  add_model(
+    linear_reg(
+      penalty = 0.1,
+      mixture = 0
+    ) |>
+      set_engine("glmnet")
+  )
+
+ro3_lasso_wf <-
+  workflow() |>
+  add_recipe(ro3_rec) |>
+  add_model(
+    linear_reg(
+      penalty = 0.1,
+      mixture = 1
+    ) |>
+      set_engine("glmnet")
+  )
+
+ro3_en_spec <-
+  linear_reg(
+    penalty = tune(),
+    mixture = tune()
+  ) |>
+  set_engine("glmnet")
+
+ro3_en_wf <-
+  workflow() |>
+  add_recipe(ro3_rec) |>
+  add_model(ro3_en_spec)
+
+ro3_grid <-
+  grid_regular(
+    penalty(range = c(-4, 0)),
+    mixture(),
+    levels = c(8, 5)
+  )
+
+ro3_en_tuned <-
+  tune_grid(
+    ro3_en_wf,
+    resamples = ro3_folds,
+    grid = ro3_grid,
+    metrics = metric_set(
+      rmse,
+      mae,
+      rsq
+    )
+  )
+
+ro3_best <-
+  select_best(
+    ro3_en_tuned,
+    metric = "rmse"
+  )
+
+ro3_final_wf <-
+  finalize_workflow(
+    ro3_en_wf,
+    ro3_best
+  )
+
+ro3_final_fit <-
+  fit(
+    ro3_final_wf,
+    data = ro3_train
+  )
+```
+
+::: notes
+The data are split into 80% training data and 20% testing data. The training data are used to build and compare the models, while the testing data are saved for the final evaluation. OLS, Ridge, Lasso, and Elastic Net regression are compared. Elastic Net is tuned using 10-fold cross-validation to find the model settings that give the lowest prediction error.
+:::
+
+## RO3: Model Evaluation {.smaller}
+
+::::: columns
+::: {.column width="55%"}
+
+```{r}
+#| label: ro3-cv-comparison
+#| code-fold: true
+#| cache: true
+
+ro3_cv_metrics <-
+  function(wf, label) {
+    fit_resamples(
+      wf,
+      resamples = ro3_folds,
+      metrics = metric_set(
+        rmse,
+        mae,
+        rsq
+      )
+    ) |>
+      collect_metrics() |>
+      mutate(model = label)
+  }
+
+ro3_cv <-
+  bind_rows(
+    ro3_cv_metrics(
+      ro3_ols_wf,
+      "OLS"
+    ),
+    ro3_cv_metrics(
+      ro3_ridge_wf,
+      "Ridge"
+    ),
+    ro3_cv_metrics(
+      ro3_lasso_wf,
+      "Lasso"
+    ),
+    collect_metrics(ro3_en_tuned) |>
+      semi_join(
+        ro3_best,
+        by = c(
+          "penalty",
+          "mixture"
+        )
+      ) |>
+      mutate(
+        model = "Tuned Elastic Net"
+      )
+  )
+
+ro3_cv |>
+  filter(.metric == "rmse") |>
+  ggplot(
+    aes(
+      reorder(model, mean),
+      mean
+    )
+  ) +
+  geom_col(
+    fill = "#23351F",
+    alpha = 0.88
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = mean - std_err,
+      ymax = mean + std_err
+    ),
+    width = 0.2,
+    color = "#D9A441"
+  ) +
+  coord_flip() +
+  scale_y_continuous(
+    labels = label_dollar()
+  ) +
+  labs(
+    title = "10-Fold CV Model Comparison",
+    x = NULL,
+    y = "Mean RMSE"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+:::
+
+::: {.column width="45%"}
+
+```{r}
+#| label: ro3-test-metrics
+#| code-fold: true
+
+ro3_preds <-
+  augment(
+    ro3_final_fit,
+    new_data = ro3_test
+  )
+
+ro3_test_metrics <-
+  ro3_preds |>
+  metric_set(
+    rmse,
+    mae,
+    rsq
+  )(
+    truth = revenue,
+    estimate = .pred
+  )
+
+ro3_test_metrics |>
+  mutate(
+    Value = case_when(
+      .metric %in% c("rmse", "mae") ~
+        dollar(.estimate),
+      TRUE ~
+        as.character(
+          round(.estimate, 3)
+        )
+    )
+  ) |>
+  transmute(
+    Metric = toupper(.metric),
+    Value
+  ) |>
+  gt() |>
+  tab_header(
+    title = "Final Test Metrics"
+  ) |>
+  tab_options(
+    table.font.size = px(17)
+  )
+```
+
+:::
+:::::
+
+::: notes
+The models are compared to determine which one gives the best predictions for sales revenue. RMSE and MAE show the amount of prediction error, so lower values are better. R-squared shows how much of the variation in sales revenue is explained by the model, so a higher value is better. The final model is then evaluated using the testing data.
+:::
+
+## RO3: Feature Importance {.smaller}
+
+::::: columns
+::: {.column width="55%"}
+
+```{r}
+#| label: ro3-vip
+#| fig-height: 5.5
+#| code-fold: true
+
+ro3_importance <-
+  ro3_final_fit |>
+  extract_fit_parsnip() |>
+  tidy() |>
+  filter(
+    term != "(Intercept)",
+    estimate != 0
+  ) |>
+  mutate(
+    importance = abs(estimate)
+  ) |>
+  slice_max(
+    importance,
+    n = 10
+  )
+
+ro3_importance |>
+  ggplot(
+    aes(
+      importance,
+      reorder(term, importance)
+    )
+  ) +
+  geom_col(
+    fill = "#23351F",
+    alpha = 0.88
+  ) +
+  labs(
+    title = "Feature Importance — Tuned Elastic Net",
+    subtitle = "Absolute standardized coefficients",
+    x = "Importance",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+:::
+
+::: {.column width="45%"}
+
+### How to Interpret RO3
+
+- Larger bars show which variables are more important for predicting Sales Revenue.
+- The importance of **Discount Percentage** shows whether discounts remain useful after the other predictors are included.
+- Units Sold, Marketing Spend, and Product Category may provide stronger predictive information.
+- These results describe predictive relationships and **do not establish causation**.
+
+:::
+:::::
+
+## RO3: Summary Findings {.smaller}
+
+::::: columns
+::: {.column width="60%"}
+
+### What This AO Answers
+
+1. RO3 examines whether Discount Percentage is related to Sales Revenue.
+2. Discount Percentage is evaluated with Units Sold, Marketing Spend, Product Category, season, day, and holiday status.
+3. OLS, Ridge, Lasso, and Elastic Net are compared using 10-fold cross-validation.
+4. Feature importance evaluates how useful Discount Percentage is relative to the other predictors.
+
+:::
+
+::: {.column width="40%"}
+
+### Business Recommendation
+
+> Retailers should evaluate Discount Percentage together with Units Sold, Marketing Spend, Product Category, and timing rather than using discounts alone when making revenue decisions.
+
+**Final interpretation:** The final RMSE, MAE, R-squared, and feature-importance results determine how well the model predicts Sales Revenue and how important Discount Percentage is relative to the other variables.
+
+:::
+:::::
 
 ------------------------------------------------------------------------
 
 # RO4 — Tim Arana
 
-## \[Placeholder: RO4 Title\] {.smaller}
+## RO4: Predicting Sales Revenue {.smaller}
 
-> **\[RO4 Member\]:** Replace this section with your analytics objective, ML method choice, data wrangling, model fitting, evaluation, and findings.
+::: columns
+::: {.column width="52%"}
+
+### Analytics Objective
+
+Predict **Sales Revenue (USD)** and evaluate how **Product Category** and other retail characteristics contribute to revenue predictions.
+
+**Machine Learning Task**
+
+- Supervised learning
+- Regression
+- Outcome: Sales Revenue (USD)
+- 80% training / 20% testing
+- 10-fold cross-validation
+
+:::
+
+::: {.column width="48%"}
+
+### Models Compared
+
+1. Lasso Regression
+2. Tuned Decision Tree
+3. Random Forest
+4. XGBoost
+
+### Key Predictors
+
+- Units Sold
+- Discount Percentage
+- Marketing Spend
+- Product Category
+- Store Location
+- Day of the Week
+- Holiday Effect
+
+:::
+:::
+
+## RO4: Model Comparison {.smaller}
+
+::: columns
+::: {.column width="48%"}
+
+### 10-Fold CV Results
+
+**XGBoost: 1,963.20**
+
+Decision Tree: 1,973.09
+
+Lasso Regression: 1,978.16
+
+Random Forest: 2,056.74
+
+*Lower RMSE = better prediction*
+
+:::
+
+::: {.column width="52%"}
+
+### Best-Performing Model
+
+**XGBoost** achieved the lowest average cross-validated RMSE.
+
+- Only **9.89 RMSE** better than Decision Tree
+- Difference was **less than one standard error**
+- The two leading models therefore performed similarly
+
+### Takeaway
+
+**XGBoost ranked first, but its predictive advantage over the simpler Decision Tree was modest.**
+
+:::
+:::
+
+## RO4: Model Interpretation {.smaller}
+
+::: columns
+::: {.column width="50%"}
+
+### Variable Importance & SHAP
+
+- **Units Sold** was the dominant predictor.
+- **Product Category** provided additional predictive value.
+- **Groceries** and **Furniture** were among the strongest category features.
+- Discount Percentage and Marketing Spend had smaller contributions.
+
+:::
+
+::: {.column width="50%"}
+
+### Partial Dependence
+
+- Predicted revenue generally increased as **Units Sold** increased.
+- The relationship was **positive but nonlinear**.
+- XGBoost captured changes and plateaus in predicted revenue.
+
+### Takeaway
+
+**Sales volume drives revenue predictions, while Product Category provides additional information.**
+
+:::
+:::
+
+## RO4: Findings & Recommendation {.smaller}
+
+::: columns
+::: {.column width="55%"}
+
+### Key Findings
+
+- **XGBoost** achieved the lowest cross-validated RMSE.
+- Its advantage over the Decision Tree was modest.
+- **Units Sold** was the dominant predictor of Sales Revenue.
+- **Product Category** provided additional predictive value, especially Groceries and Furniture.
+
+:::
+
+::: {.column width="45%"}
+
+### Business Recommendation
+
+- Use **XGBoost** when predictive performance is the priority.
+- Consider the **Decision Tree** when interpretability is more important.
+- Monitor sales volume closely.
+- Use **category-specific merchandising and promotional strategies**.
+
+### Live Model
+
+[Retail Sales Revenue Predictor](https://tarana7.shinyapps.io/W10-ML-Deployment/)
+
+:::
+:::
 
 ------------------------------------------------------------------------
 
@@ -789,9 +1429,11 @@ If the interaction is positive, retailers should pair discounts with stronger ma
 
 - **RO1:** Seasonal and holiday timing have a measurable but secondary effect on revenue — Random Forest outperforms Elastic Net regression, indicating seasonality interacts non-linearly with category and discount strategy rather than driving revenue on its own.
 - **RO2:** Discount percentage is not the primary driver of revenue class. Unit volume and marketing spend have stronger predictive power. A Random Forest model achieves strong discrimination between high and low revenue transactions (AUC ≈ 0.85+).
-- \[RO3 team member fills this in\]
-- \[RO4 team member fills this in\]
-- \[RO5 team member fills this in\]
+- **RO3:** Regression models evaluate Discount Percentage alongside Units Sold, Marketing Spend, Product Category, and timing variables, showing that discounts should be considered together with other retail factors rather than in isolation.
+
+- **RO4:** XGBoost achieved the lowest cross-validated RMSE for predicting Sales Revenue. Units Sold was the dominant predictor, while Product Category, especially Groceries and Furniture, provided additional predictive value.
+
+- **RO5:** Marketing Spend appears to interact with Discount Percentage in shaping Sales Revenue, suggesting that discount and marketing decisions should be coordinated rather than managed independently.
 :::
 
 ::: {.column width="50%"}
