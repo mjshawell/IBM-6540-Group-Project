@@ -26,7 +26,7 @@ execute:
   warning: false
   message: false
   echo: false
-  freeze: true
+  freeze: false
 ---
 
 ```{r}
@@ -76,6 +76,17 @@ retail <- read_excel("Retail_sales.xlsx") |>
       discount_group,
       levels = c("No Discount", "Low (1-10%)", "High (11-20%)")
     ),
+    mktg_spend_group = ntile(mktg_spend, 3),
+    mktg_spend_group = case_when(
+      mktg_spend_group == 1 ~ "Low Marketing Spend",
+      mktg_spend_group == 2 ~ "Medium Marketing Spend",
+      TRUE                  ~ "High Marketing Spend"
+    ),
+    mktg_spend_group = factor(
+      mktg_spend_group,
+      levels = c("Low Marketing Spend", "Medium Marketing Spend", "High Marketing Spend")
+    ),
+    discount_mktg_interaction = discount_pct * mktg_spend,
     category = factor(category),
     day      = factor(day),
     high_revenue = factor(
@@ -125,13 +136,13 @@ retail |>
 ::: {.column width="50%"}
 **Five research objectives guide our analysis:**
 
-| RO  | Member          | Focus                     |
-|-----|-----------------|---------------------------|
-| RO1 | \[Member Name\] | \[RO1 description\]       |
-| RO2 | Aldo Naranjo    | Discount % vs. Units Sold |
-| RO3 | \[Member Name\] | \[RO3 description\]       |
-| RO4 | \[Member Name\] | \[RO4 description\]       |
-| RO5 | \[Member Name\] | \[RO5 description\]       |
+| RO  | Member          | Focus                       |
+|-----|-----------------|-----------------------------|
+| RO1 | \[Member Name\] | \[RO1 description\]         |
+| RO2 | Aldo Naranjo    | Discount % vs. Units Sold   |
+| RO3 | \[Member Name\] | \[RO3 description\]         |
+| RO4 | \[Member Name\] | \[RO4 description\]         |
+| RO5 | Mickyas Shawel  | Marketing Spend Interaction |
 :::
 
 ::: {.column width="50%"}
@@ -432,9 +443,252 @@ rf_fit |>
 
 # RO5 — Mickyas Shawel
 
-## \[Placeholder: RO5 Titl/e\] {.smaller}
+## RO5: Does Marketing Spend Strengthen Discount Performance?
 
-> **\[RO5 Member\]:** Replace this section with your analytics objective, ML method choice, data wrangling, model fitting, evaluation, and findings.
+**Analytics Objective:** Analyze whether marketing spend strengthens the relationship between discount percentage and sales performance.
+
+::::: columns
+::: {.column width="55%"}
+**Business question:**
+
+> Are discounts more effective when they are supported by higher marketing spend?
+
+**Why it matters:** Discounts can only influence customers if customers know about them. Marketing spend may increase awareness of promotions and help convert discount strategy into stronger sales revenue.
+:::
+
+::: {.column width="45%"}
+**Variables used:**
+
+- **IV 1:** Discount Percentage
+- **IV 2:** Marketing Spend
+- **Interaction:** Discount % × Marketing Spend
+- **Primary DV:** Sales Revenue
+- **Secondary DV:** Units Sold
+:::
+:::::
+
+::: notes
+For RO5, I focused on whether marketing spend changes how discounts relate to sales performance. A discount may not be effective by itself if customers are not exposed to the promotion. This objective tests whether stronger marketing support is associated with stronger revenue and unit outcomes across discount levels.
+:::
+
+## RO5: Wrangling Plan
+
+::::: columns
+::: {.column width="50%"}
+**Data preparation steps:**
+
+1.  Use cleaned retail records from 2022–2024
+2.  Group discounts into no, low, and high levels
+3.  Split marketing spend into low, medium, and high groups
+4.  Create an interaction feature: `discount_pct * mktg_spend`
+5.  Summarize revenue and units by discount group and marketing spend group
+:::
+
+::: {.column width="50%"}
+```{r}
+#| label: ro5-summary-preview
+#| fig-height: 4.8
+
+ro5_summary <- retail |>
+  group_by(discount_group, mktg_spend_group) |>
+  summarise(
+    transactions = n(),
+    avg_revenue = mean(revenue, na.rm = TRUE),
+    avg_units = mean(units, na.rm = TRUE),
+    avg_mktg_spend = mean(mktg_spend, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ro5_summary |>
+  mutate(
+    avg_revenue = dollar(avg_revenue),
+    avg_units = round(avg_units, 1),
+    avg_mktg_spend = dollar(avg_mktg_spend)
+  ) |>
+  gt() |>
+  tab_header(title = "RO5 Summary by Discount and Marketing Spend") |>
+  tab_options(table.font.size = px(15))
+```
+:::
+:::::
+
+::: notes
+The main wrangling step is creating a marketing spend group. I used three groups so we can compare low, medium, and high marketing investment across the existing discount levels. This makes the interaction easier to explain visually before moving into the model.
+:::
+
+## RO5: Marketing Spend and Revenue
+
+```{r}
+#| label: ro5-marketing-revenue-scatter
+#| fig-height: 5.4
+
+retail |>
+  sample_n(min(5000, nrow(retail))) |>
+  ggplot(aes(mktg_spend, revenue, color = discount_group)) +
+  geom_point(alpha = 0.28, size = 1.4) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.1) +
+  scale_color_manual(values = c("#4E6E8E", "#FFB81C", "#00693D")) +
+  scale_x_continuous(labels = label_dollar()) +
+  scale_y_continuous(labels = label_dollar()) +
+  labs(
+    title = "Marketing Spend vs. Sales Revenue",
+    subtitle = "Trend lines compare whether revenue rises differently across discount levels",
+    x = "Marketing Spend (USD)",
+    y = "Sales Revenue (USD)",
+    color = "Discount Group"
+  ) +
+  theme_minimal(base_size = 15)
+```
+
+::: notes
+This scatterplot shows how marketing spend relates to revenue across discount groups. If the trend line for high discounts rises more sharply as marketing spend increases, that supports the idea that discounts may perform better when they receive stronger marketing support.
+:::
+
+## RO5: Discount × Marketing Spend Interaction
+
+```{r}
+#| label: ro5-interaction-plot
+#| fig-height: 5.4
+
+ro5_summary |>
+  ggplot(aes(discount_group, avg_revenue,
+             group = mktg_spend_group,
+             color = mktg_spend_group)) +
+  geom_line(linewidth = 1.3) +
+  geom_point(size = 3.5) +
+  scale_color_manual(values = c("#4E6E8E", "#FFB81C", "#00693D")) +
+  scale_y_continuous(labels = label_dollar()) +
+  labs(
+    title = "Interaction Plot: Discount Level by Marketing Spend Group",
+    subtitle = "Non-parallel lines suggest that marketing spend changes the discount effect",
+    x = NULL,
+    y = "Average Sales Revenue",
+    color = "Marketing Spend"
+  ) +
+  theme_minimal(base_size = 15)
+```
+
+::: notes
+This is the main RO5 visual. Each line represents a different marketing spend group. If the lines are not parallel, it suggests an interaction. The interaction means the relationship between discounts and revenue differs depending on the level of marketing spend.
+:::
+
+## RO5: Model Fitting and Evaluation
+
+::::: columns
+::: {.column width="48%"}
+**ML method used:** Linear regression with an interaction term
+
+**Why this method:**
+
+- Sales revenue is continuous
+- The interaction term is directly interpretable
+- Results are easy to explain to retail decision-makers
+- Serves as a transparent model for measuring combined effects
+:::
+
+::: {.column width="52%"}
+```{r}
+#| label: ro5-model-fit
+
+ro5_data <- retail |>
+  select(
+    revenue, discount_pct, mktg_spend,
+    category, season, holiday, location
+  )
+
+ro5_split <- initial_split(ro5_data, prop = 0.80, strata = revenue)
+ro5_train <- training(ro5_split)
+ro5_test  <- testing(ro5_split)
+
+ro5_recipe <- recipe(revenue ~ ., data = ro5_train) |>
+  step_interact(terms = ~ discount_pct:mktg_spend) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+ro5_lm_spec <- linear_reg() |>
+  set_engine("lm")
+
+ro5_workflow <- workflow() |>
+  add_recipe(ro5_recipe) |>
+  add_model(ro5_lm_spec)
+
+ro5_fit <- last_fit(
+  ro5_workflow,
+  split = ro5_split,
+  metrics = metric_set(rmse, mae, rsq)
+)
+
+collect_metrics(ro5_fit) |>
+  select(.metric, .estimate) |>
+  gt() |>
+  fmt_number(columns = .estimate, decimals = 3) |>
+  tab_header(title = "RO5 Test-Set Model Metrics") |>
+  tab_options(table.font.size = px(16))
+```
+:::
+:::::
+
+::: notes
+For modeling, I used a linear regression model with an interaction between discount percentage and marketing spend. This fits the RO5 objective because it allows us to test whether marketing spend changes the effect of discounting on revenue. The model is evaluated on a held-out test set using RMSE, MAE, and R-squared.
+:::
+
+## RO5: Most Important Predictors
+
+```{r}
+#| label: ro5-feature-importance
+#| fig-height: 5.4
+
+ro5_final_fit <- fit(ro5_workflow, data = ro5_train)
+
+ro5_final_fit |>
+  extract_fit_parsnip() |>
+  tidy() |>
+  filter(term != "(Intercept)") |>
+  mutate(importance = abs(estimate)) |>
+  slice_max(importance, n = 12) |>
+  ggplot(aes(reorder(term, importance), importance)) +
+  geom_col(fill = "#00693D") +
+  coord_flip() +
+  labs(
+    title = "RO5 Feature Importance",
+    subtitle = "Largest absolute standardized coefficients from the interaction model",
+    x = NULL,
+    y = "Absolute Coefficient Size"
+  ) +
+  theme_minimal(base_size = 15)
+```
+
+::: notes
+This chart identifies which predictors contributed the most to the RO5 revenue model. If the interaction term or marketing spend-related variables appear near the top, that supports the idea that discount strategy and promotional investment should be analyzed together rather than separately.
+:::
+
+## RO5: Findings and Recommendation
+
+:::::: columns
+::: {.column width="50%"}
+**Key findings:**
+
+- Marketing spend is an important context for understanding discount performance.
+- Discount effects should not be evaluated in isolation.
+- The interaction model tests whether revenue response changes when higher discounts are paired with higher marketing investment.
+- Average revenue comparisons are strongest when viewed by both discount group and marketing spend group.
+:::
+
+:::: {.column width="50%"}
+**Recommendation:**
+
+Retailers should prioritize **coordinated promotion planning**: discounts should be paired with sufficient marketing support, especially for products or seasons where customer awareness is needed to convert the discount into revenue lift.
+
+::: callout-tip
+Discounts are not just a pricing decision. They are also a communication and campaign planning decision.
+:::
+::::
+::::::
+
+::: notes
+My recommendation is that retailers should avoid treating discounts as standalone tactics. A discount is more likely to perform well when customers are aware of it, which means marketing support matters. The practical takeaway is to coordinate promotional pricing with campaign investment rather than lowering prices without a communication plan.
+:::
 
 ------------------------------------------------------------------------
 
@@ -450,7 +704,7 @@ rf_fit |>
 - **RO2:** Discount percentage is not the primary driver of revenue class. Unit volume and marketing spend have stronger predictive power. A Random Forest model achieves strong discrimination between high and low revenue transactions (AUC ≈ 0.85+).
 - \[RO3 team member fills this in\]
 - \[RO4 team member fills this in\]
-- \[RO5 team member fills this in\]
+- **RO5:** Marketing spend provides important context for discount performance. Discounts should be evaluated alongside campaign investment because promotional pricing is more effective when customers are aware of the offer.
 :::
 
 ::: {.column width="50%"}
