@@ -1,0 +1,123 @@
+/*-- scss:defaults --*/
+
+/* CPP Brand Colors */
+$cpp-green: #00693D;
+$cpp-gold: #FFB81C;
+$white: #ffffff;
+$black: #1a1a1a;
+$light-gray: #f5f5f5;
+$mid-gray: #666666;
+
+/* Typography */
+$font-primary: Arial, sans-serif;
+$font-body: Arial, sans-serif;
+$font-code: "Courier New", monospace;
+
+/*-- scss:rules --*/
+
+/* Reveal overrides */
+.reveal {
+  font-family: $font-body;
+  color: $black;
+
+  h1 {
+    font-size: 2.2em;
+    color: $cpp-green !important;
+    font-weight: bold;
+  }
+
+  h2 {
+    font-size: 1.5em;
+    color: $cpp-green !important;
+    font-weight: bold;
+    border-bottom: 3px solid $cpp-gold;
+    padding-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 1.15em;
+    color: $black;
+    font-weight: bold;
+  }
+
+  a {
+    color: $cpp-green !important;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .slide-number {
+    color: $cpp-gold;
+    font-size: 0.7em;
+  }
+
+  .progress span {
+    background: $cpp-gold;
+  }
+
+  pre code {
+    font-family: $font-code;
+    font-size: 0.75em;
+    background: $light-gray;
+    border-left: 4px solid $cpp-green;
+    padding: 10px;
+  }
+
+  blockquote {
+    border-left: 4px solid $cpp-gold;
+    padding-left: 16px;
+    font-style: italic;
+    color: $mid-gray;
+  }
+
+  .callout {
+    border-left-color: $cpp-green;
+  }
+
+  strong {
+    color: $cpp-green;
+  }
+}
+
+/* Section title slides */
+.reveal section.title-slide {
+  background-color: $cpp-green;
+  color: $white;
+
+  h1, h2, p {
+    color: $white !important;
+  }
+}
+
+/* Value box style panels */
+.metric-box {
+  background: $light-gray;
+  border-top: 4px solid $cpp-green;
+  padding: 16px;
+  margin: 8px;
+  text-align: center;
+  border-radius: 4px;
+
+  .metric-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: $cpp-green;
+  }
+
+  .metric-label {
+    font-size: 0.85em;
+    color: $mid-gray;
+  }
+}
+
+/* Two-column layout helper */
+.col-left {
+  float: left;
+  width: 48%;
+}
+
+.col-right {
+  float: right;
+  width: 48%;
+}
