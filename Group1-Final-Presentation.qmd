@@ -331,24 +331,15 @@ retail |>
 
 ## RO1: Machine Learning Methods
 
-- **Objective:** Predict Sales Revenue from seasonal and timing
-  features — season, month, day of week, and holiday status — alongside
-  product category, discount group, and marketing spend group
-- **Regression-Focused Method:** Elastic Net regression (tuned penalty
-  and mixture) as the interpretable baseline
-- **Ensemble Method:** Random Forest regression (primary model) to
-  capture non-linear seasonal interactions
+- **Objective:** Predict Sales Revenue from seasonal and timing features — season, month, day of week, and holiday status — alongside product category, discount group, and marketing spend group
+- **Regression-Focused Method:** Elastic Net regression (tuned penalty and mixture) as the interpretable baseline
+- **Ensemble Method:** Random Forest regression (primary model) to capture non-linear seasonal interactions
 - **Evaluation Metric:** RMSE and R-squared (regression)
 
 ::: notes
-RO1 predicts sales revenue as a continuous outcome rather than a
-high/low class, which lets us quantify exactly how much seasonal timing
-moves revenue in dollar terms.
+RO1 predicts sales revenue as a continuous outcome rather than a high/low class, which lets us quantify exactly how much seasonal timing moves revenue in dollar terms.
 
-Elastic Net is used as an interpretable, regularized baseline. Random
-Forest is the primary model because seasonal effects often interact
-with category and discount group in non-linear ways that a linear model
-can't capture.
+Elastic Net is used as an interpretable, regularized baseline. Random Forest is the primary model because seasonal effects often interact with category and discount group in non-linear ways that a linear model can't capture.
 :::
 
 ## RO1: Model Fitting
@@ -398,7 +389,7 @@ rf_fit <- fit(rf_wf, data = train)
 
 ## RO1: Model Evaluation
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
 ```{r}
 #| label: ro1-ml-metrics
@@ -424,6 +415,7 @@ bind_rows(en_metrics, rf_metrics) |>
   knitr::kable(col.names = c("Model", "RMSE", "R-squared"))
 ```
 :::
+
 ::: {.column width="50%"}
 ```{r}
 #| label: ro1-ml-scatter
@@ -439,19 +431,15 @@ rf_preds |>
   labs(x = "Actual Revenue", y = "Predicted Revenue")
 ```
 :::
-:::
+:::::
 
 ::: notes
-The metrics table compares Elastic Net and Random Forest on RMSE
-(average dollar error) and R-squared (share of revenue variation
-explained). The scatterplot shows predicted vs. actual revenue for the
-Random Forest — points closer to the dashed line mean more accurate
-predictions.
+The metrics table compares Elastic Net and Random Forest on RMSE (average dollar error) and R-squared (share of revenue variation explained). The scatterplot shows predicted vs. actual revenue for the Random Forest — points closer to the dashed line mean more accurate predictions.
 :::
 
 ## RO1: Variable Importance
 
-::: columns
+::::: columns
 ::: {.column width="55%"}
 ```{r}
 #| label: ro1-ml-vip
@@ -466,45 +454,36 @@ rf_fit |>
   theme_minimal(base_size = 13)
 ```
 :::
+
 ::: {.column width="45%"}
 **Key findings from VIP:**
 
-- Product category and discount group tend to dominate over pure
-  seasonal timing
-- Season and holiday status still contribute meaningfully, confirming
-  timing effects exist but are secondary to category/discount
+- Product category and discount group tend to dominate over pure seasonal timing
+- Season and holiday status still contribute meaningfully, confirming timing effects exist but are secondary to category/discount
 - Day of week is typically the weakest predictor
 :::
-:::
+:::::
 
 ::: notes
-This chart ranks which features the Random Forest relied on most to
-predict revenue. If category or discount group outrank season, it means
-seasonal timing shifts revenue, but category and promotion strategy
-still explain more of the variation overall.
+This chart ranks which features the Random Forest relied on most to predict revenue. If category or discount group outrank season, it means seasonal timing shifts revenue, but category and promotion strategy still explain more of the variation overall.
 :::
 
 ## RO1: Summary Findings
 
-::: columns
+::::: columns
 ::: {.column width="60%"}
-1. Revenue varies measurably by season and holiday status, but the
-   effect is smaller than category or discount-driven variation
-2. Random Forest outperforms Elastic Net on RMSE, indicating seasonal
-   effects interact non-linearly with category and discount group
-3. Holiday periods show a consistent revenue lift over non-holiday
-   periods within the same season
-4. Timing alone is not sufficient for revenue forecasting — it should
-   be combined with category and promotional context
+1.  Revenue varies measurably by season and holiday status, but the effect is smaller than category or discount-driven variation
+2.  Random Forest outperforms Elastic Net on RMSE, indicating seasonal effects interact non-linearly with category and discount group
+3.  Holiday periods show a consistent revenue lift over non-holiday periods within the same season
+4.  Timing alone is not sufficient for revenue forecasting — it should be combined with category and promotional context
 :::
+
 ::: {.column width="40%"}
 **Business recommendation:**
 
-> Use seasonal and holiday timing as a secondary lever layered on top of
-> category- and discount-driven strategy, not as a standalone driver of
-> revenue planning.
+> Use seasonal and holiday timing as a secondary lever layered on top of category- and discount-driven strategy, not as a standalone driver of revenue planning.
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -708,7 +687,6 @@ rf_fit |>
 
 ::::: columns
 ::: {.column width="55%"}
-
 ### ML Methods Used
 
 - OLS Linear Regression (baseline)
@@ -718,11 +696,9 @@ rf_fit |>
 - 10-fold cross-validation for model comparison
 
 **Evaluation Metrics:** RMSE, MAE, and R-squared
-
 :::
 
 ::: {.column width="45%"}
-
 ```{r}
 #| label: ro3-discount-revenue
 #| fig-height: 4.5
@@ -753,7 +729,6 @@ retail |>
   ) +
   theme_minimal(base_size = 13)
 ```
-
 :::
 :::::
 
@@ -765,7 +740,6 @@ RO3 asks whether discounts increase sales revenue. Discount percentage is the ma
 
 ::::: columns
 ::: {.column width="55%"}
-
 ```{r}
 #| label: ro3-category-discount
 #| fig-height: 5
@@ -803,11 +777,9 @@ retail |>
   theme_minimal(base_size = 12) +
   theme(legend.position = "top")
 ```
-
 :::
 
 ::: {.column width="45%"}
-
 ```{r}
 #| label: ro3-discount-summary
 
@@ -831,7 +803,6 @@ retail |>
     table.font.size = px(16)
   )
 ```
-
 :::
 :::::
 
@@ -993,7 +964,6 @@ The data are split into 80% training data and 20% testing data. The training dat
 
 ::::: columns
 ::: {.column width="55%"}
-
 ```{r}
 #| label: ro3-cv-comparison
 #| code-fold: true
@@ -1072,11 +1042,9 @@ ro3_cv |>
   ) +
   theme_minimal(base_size = 12)
 ```
-
 :::
 
 ::: {.column width="45%"}
-
 ```{r}
 #| label: ro3-test-metrics
 #| code-fold: true
@@ -1121,7 +1089,6 @@ ro3_test_metrics |>
     table.font.size = px(17)
   )
 ```
-
 :::
 :::::
 
@@ -1133,7 +1100,6 @@ The models are compared to determine which one gives the best predictions for sa
 
 ::::: columns
 ::: {.column width="55%"}
-
 ```{r}
 #| label: ro3-vip
 #| fig-height: 5.5
@@ -1174,18 +1140,15 @@ ro3_importance |>
   ) +
   theme_minimal(base_size = 12)
 ```
-
 :::
 
 ::: {.column width="45%"}
-
 ### How to Interpret RO3
 
 - Larger bars show which variables are more important for predicting Sales Revenue.
 - The importance of **Discount Percentage** shows whether discounts remain useful after the other predictors are included.
 - Units Sold, Marketing Spend, and Product Category may provide stronger predictive information.
 - These results describe predictive relationships and **do not establish causation**.
-
 :::
 :::::
 
@@ -1193,24 +1156,20 @@ ro3_importance |>
 
 ::::: columns
 ::: {.column width="60%"}
-
 ### What This AO Answers
 
-1. RO3 examines whether Discount Percentage is related to Sales Revenue.
-2. Discount Percentage is evaluated with Units Sold, Marketing Spend, Product Category, season, day, and holiday status.
-3. OLS, Ridge, Lasso, and Elastic Net are compared using 10-fold cross-validation.
-4. Feature importance evaluates how useful Discount Percentage is relative to the other predictors.
-
+1.  RO3 examines whether Discount Percentage is related to Sales Revenue.
+2.  Discount Percentage is evaluated with Units Sold, Marketing Spend, Product Category, season, day, and holiday status.
+3.  OLS, Ridge, Lasso, and Elastic Net are compared using 10-fold cross-validation.
+4.  Feature importance evaluates how useful Discount Percentage is relative to the other predictors.
 :::
 
 ::: {.column width="40%"}
-
 ### Business Recommendation
 
 > Retailers should evaluate Discount Percentage together with Units Sold, Marketing Spend, Product Category, and timing rather than using discounts alone when making revenue decisions.
 
 **Final interpretation:** The final RMSE, MAE, R-squared, and feature-importance results determine how well the model predicts Sales Revenue and how important Discount Percentage is relative to the other variables.
-
 :::
 :::::
 
@@ -1220,9 +1179,8 @@ ro3_importance |>
 
 ## RO4: Predicting Sales Revenue
 
-::: columns
+::::: columns
 ::: {.column width="52%"}
-
 ### Analytics Objective
 
 Predict **Sales Revenue (USD)** and evaluate how **Product Category** and other retail characteristics contribute to revenue predictions.
@@ -1234,17 +1192,15 @@ Predict **Sales Revenue (USD)** and evaluate how **Product Category** and other 
 - Outcome: Sales Revenue (USD)
 - 80% training / 20% testing
 - 10-fold cross-validation
-
 :::
 
 ::: {.column width="48%"}
-
 ### Models Compared
 
-1. Lasso Regression
-2. Tuned Decision Tree
-3. Random Forest
-4. XGBoost
+1.  Lasso Regression
+2.  Tuned Decision Tree
+3.  Random Forest
+4.  XGBoost
 
 ### Key Predictors
 
@@ -1255,15 +1211,13 @@ Predict **Sales Revenue (USD)** and evaluate how **Product Category** and other 
 - Store Location
 - Day of the Week
 - Holiday Effect
-
 :::
-:::
+:::::
 
 ## RO4: Model Comparison 
 
-::: columns
+::::: columns
 ::: {.column width="48%"}
-
 ### 10-Fold CV Results
 
 **XGBoost: 1,963.20**
@@ -1275,11 +1229,9 @@ Lasso Regression: 1,978.16
 Random Forest: 2,056.74
 
 *Lower RMSE = better prediction*
-
 :::
 
 ::: {.column width="52%"}
-
 ### Best-Performing Model
 
 **XGBoost** achieved the lowest average cross-validated RMSE.
@@ -1291,26 +1243,22 @@ Random Forest: 2,056.74
 ### Takeaway
 
 **XGBoost ranked first, but its predictive advantage over the simpler Decision Tree was modest.**
-
 :::
-:::
+:::::
 
 ## RO4: Model Interpretation 
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
-
 ### Variable Importance & SHAP
 
 - **Units Sold** was the dominant predictor.
 - **Product Category** provided additional predictive value.
 - **Groceries** and **Furniture** were among the strongest category features.
 - Discount Percentage and Marketing Spend had smaller contributions.
-
 :::
 
 ::: {.column width="50%"}
-
 ### Partial Dependence
 
 - Predicted revenue generally increased as **Units Sold** increased.
@@ -1320,26 +1268,22 @@ Random Forest: 2,056.74
 ### Takeaway
 
 **Sales volume drives revenue predictions, while Product Category provides additional information.**
-
 :::
-:::
+:::::
 
 ## RO4: Findings & Recommendation 
 
-::: columns
+::::: columns
 ::: {.column width="55%"}
-
 ### Key Findings
 
 - **XGBoost** achieved the lowest cross-validated RMSE.
 - Its advantage over the Decision Tree was modest.
 - **Units Sold** was the dominant predictor of Sales Revenue.
 - **Product Category** provided additional predictive value, especially Groceries and Furniture.
-
 :::
 
 ::: {.column width="45%"}
-
 ### Business Recommendation
 
 - Use **XGBoost** when predictive performance is the priority.
@@ -1350,73 +1294,125 @@ Random Forest: 2,056.74
 ### Live Model
 
 [Retail Sales Revenue Predictor](https://tarana7.shinyapps.io/W10-ML-Deployment/)
-
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
 # RO5 — Mickyas Shawel
 
-## RO5: Marketing Spend Interaction
-
-::::: columns
-::: {.column width="52%"}
-**Research objective:** Determine whether marketing spend amplifies the relationship between discount percentage and retail sales revenue.
-
-**Machine learning task:**
-
-- Supervised learning
-- Regression
-- Outcome: `revenue`
-- Features: `discount_pct`, `mktg_spend`, and `discount_pct × mktg_spend`
-:::
-
-::: {.column width="48%"}
-**Business question:**
-
-> Are discounts more effective when supported by higher marketing spend?
-
-**Expected contribution:** Helps managers decide whether promotional budget should be coordinated with discounts rather than treated as a separate decision.
-:::
-:::::
-
-## RO5: Data Wrangling & Modeling Plan
+## RO5: Marketing Spend × Discount Interaction 
 
 ::::: columns
 ::: {.column width="50%"}
-**Wrangling plan**
 
-- Create Low, Medium, and High marketing-spend groups
-- Summarize revenue by discount group and spend group
-- Standardize numeric predictors for modeling
-- Create interaction term: `discount_pct:mktg_spend`
-:::
+**Research Objective**
 
-::: {.column width="50%"}
-**Modeling approach**
+Determine whether marketing spend strengthens the effect of discount percentage on retail sales revenue.
+
+**Final Model**
 
 `Revenue ~ Discount + Marketing Spend + Discount × Marketing Spend`
 
-The interaction term tests whether the discount effect changes at different levels of marketing investment.
+**Key Result**
+
+- Marketing Spend was positively associated with Revenue.
+- The interaction term was positive, indicating that discounts perform better when supported by higher marketing investment.
+- Discounts alone produced smaller gains than coordinated promotional campaigns.
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+#| fig-height: 3.8
+
+retail |>
+  ggplot(
+    aes(
+      mktg_spend,
+      revenue,
+      color = discount_pct
+    )
+  ) +
+  geom_point(alpha = .35) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black"
+  ) +
+  scale_y_continuous(
+    labels = scales::label_dollar()
+  ) +
+  labs(
+    title = "Marketing Spend vs Revenue",
+    x = "Marketing Spend",
+    y = "Revenue",
+    color = "Discount %"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
 :::
 :::::
 
-## RO5: Planned Visualizations & Insight 
+
+## RO5: Interaction Analysis 
 
 ::::: columns
 ::: {.column width="50%"}
-**Visualizations**
 
-- Scatterplot: marketing spend vs. revenue
-- Grouped bar chart: revenue by discount/spend group
-- Interaction plot: discount effect by spend level
+```{r}
+#| fig-height: 3.6
+
+retail |>
+  mutate(
+    spend_group = ntile(mktg_spend, 3),
+    spend_group = factor(
+      spend_group,
+      labels = c(
+        "Low",
+        "Medium",
+        "High"
+      )
+    )
+  ) |>
+  group_by(spend_group) |>
+  summarise(
+    avg_discount = mean(discount_pct),
+    avg_revenue = mean(revenue),
+    .groups = "drop"
+  ) |>
+  ggplot(
+    aes(
+      avg_discount,
+      avg_revenue,
+      color = spend_group
+    )
+  ) +
+  geom_point(size = 3) +
+  geom_line() +
+  scale_y_continuous(
+    labels = scales::label_dollar()
+  ) +
+  labs(
+    title = "Average Revenue by Spend Level",
+    x = "Average Discount (%)",
+    y = "Average Revenue"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
 :::
 
 ::: {.column width="50%"}
-**Expected insight**
 
-If the interaction is positive, retailers should pair discounts with stronger marketing support. If weak, discounting alone may not generate proportional revenue growth.
+### Business Interpretation
+
+- Higher marketing investment consistently generated higher average revenue.
+- Promotions were most effective when marketing support increased alongside discounts.
+- Coordinating advertising budgets with promotional pricing can improve revenue performance more than using discounts independently.
+
 :::
 :::::
 
@@ -1431,7 +1427,9 @@ If the interaction is positive, retailers should pair discounts with stronger ma
 **Across all research objectives, our analysis found:**
 
 - **RO1:** Seasonal and holiday timing have a measurable but secondary effect on revenue — Random Forest outperforms Elastic Net regression, indicating seasonality interacts non-linearly with category and discount strategy rather than driving revenue on its own.
+
 - **RO2:** Discount percentage is not the primary driver of revenue class. Unit volume and marketing spend have stronger predictive power. A Random Forest model achieves strong discrimination between high and low revenue transactions (AUC ≈ 0.85+).
+
 - **RO3:** Regression models evaluate Discount Percentage alongside Units Sold, Marketing Spend, Product Category, and timing variables, showing that discounts should be considered together with other retail factors rather than in isolation.
 
 - **RO4:** XGBoost achieved the lowest cross-validated RMSE for predicting Sales Revenue. Units Sold was the dominant predictor, while Product Category, especially Groceries and Furniture, provided additional predictive value.
