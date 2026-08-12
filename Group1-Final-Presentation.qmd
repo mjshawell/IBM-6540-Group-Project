@@ -203,7 +203,7 @@ retail |>
 
 ---
 
-# RO1 — [Member Name]
+# RO1 — Jake Evans
 
 ## [Placeholder: RO1 Title] {.smaller}
 
@@ -409,7 +409,7 @@ rf_fit |>
 
 ---
 
-# RO3 — [Member Name]
+# RO3 — Luis Berumen
 
 ## [Placeholder: RO3 Title] {.smaller}
 
@@ -417,7 +417,7 @@ rf_fit |>
 
 ---
 
-# RO4 — [Member Name]
+# RO4 — Tim Arana
 
 ## [Placeholder: RO4 Title] {.smaller}
 
@@ -425,9 +425,9 @@ rf_fit |>
 
 ---
 
-# RO5 — [Member Name]
+# RO5 — Mickyas Shawel
 
-## [Placeholder: RO5 Title] {.smaller}
+## [Placeholder: RO5 Titl/e] {.smaller}
 
 > **[RO5 Member]:** Replace this section with your analytics objective, ML method choice, data wrangling, model fitting, evaluation, and findings.
 
