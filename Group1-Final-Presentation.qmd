@@ -561,7 +561,7 @@ p1 + p2
 #| code-fold: true
 # Train/test split — stratified on outcome
 set.seed(617)
-retail_ml <- retail |> select(-location, -date)
+retail_ml <- retail |> select(-location, -date, -revenue, -store_id, -product_id)
 split <- initial_split(retail_ml, prop = 0.80, strata = high_revenue)
 train <- training(split)
 test  <- testing(split)
@@ -665,7 +665,7 @@ rf_fit |>
 
 2.  Transactions in Electronics and Furniture are much more likely to generate above-median revenue, regardless of discount level.
 
-3.  A tuned Random Forest achieves a ROC AUC of approximately 0.85+, meaning the model correctly ranks a true high-revenue transaction above a low-revenue one about 85% of the time.
+3.  A tuned Random Forest achieves a ROC AUC of approximately 0.76, meaning the model correctly ranks a true high-revenue transaction above a low-revenue one about 78% of the time.
 
 4.  Deployed as an interactive Shiny app, the model lets users explore how combinations of these features drive revenue predictions in real time.
 :::
@@ -1428,7 +1428,7 @@ retail |>
 
 - **RO1:** Seasonal and holiday timing have a measurable but secondary effect on revenue — Random Forest outperforms Elastic Net regression, indicating seasonality interacts non-linearly with category and discount strategy rather than driving revenue on its own.
 
-- **RO2:** Discount percentage is not the primary driver of revenue class. Unit volume and marketing spend have stronger predictive power. A Random Forest model achieves strong discrimination between high and low revenue transactions (AUC ≈ 0.85+).
+- **RO2:** Discount percentage is not the primary driver of revenue class. Unit volume and marketing spend have stronger predictive power. A Random Forest model achieves strong discrimination between high and low revenue transactions (AUC ≈ 0.76).
 
 - **RO3:** Regression models evaluate Discount Percentage alongside Units Sold, Marketing Spend, Product Category, and timing variables, showing that discounts should be considered together with other retail factors rather than in isolation.
 
