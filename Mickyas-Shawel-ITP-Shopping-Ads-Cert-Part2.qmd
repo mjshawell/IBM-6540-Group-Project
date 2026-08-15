@@ -1,0 +1,92 @@
+---
+title: "Google Shopping Ads Certification Part 2"
+subtitle: "Retail Strategy, Campaign Types & Performance Max | IBM 6300"
+author: "Mickyas Shawel"
+date: today
+date-format: "MMMM D, YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: false
+    theme: cosmo
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+------------------------------------------------------------------------
+
+## Skillshop Module Completion
+
+The following screenshots confirm successful completion of all three assigned Google Skillshop modules for Part 2 of the Google Shopping Ads Certification series.
+
+**Modules completed:**
+
+- Launch Your Retail Strategy
+- Identify the Right Shopping Campaign Type
+- Unlock the Power of Performance Max
+
+![](images/Screenshot 2026-08-14 at 11.26.40 PM.png)
+
+## CPP Farm Store Application Reflection
+
+### Overview
+
+The three Skillshop modules in Part 2 of the Google Shopping Ads Certification series covered the strategic layer of retail advertising — how retailers define campaign objectives, select the right campaign structure, and use Performance Max to reach customers across every Google-owned surface. Each module was directly applicable to the work our group is doing for CPP Farm Store, which operates in a genuinely omnichannel context: a physical campus storefront at Cal Poly Pomona with a growing Shopify-based digital presence and an audience that spans students, faculty, staff, and local community members.
+
+### Retail Campaign Objective for CPP Farm Store
+
+The most appropriate retail campaign objective for CPP Farm Store is **local store visits combined with online sales** — a blended goal that reflects how the store actually operates. Unlike a pure e-commerce retailer, CPP Farm Store's primary shopping experience remains in-person. Most customers discover and purchase products on campus. The digital storefront functions as a discovery and pre-shopping tool — customers browse products, check availability, and then pick up in person.
+
+This means the campaign objective should not be purely transactional (driving online checkouts) but should also support **store traffic and brand awareness** among the CPP campus community and surrounding Pomona area. Google's local inventory ads, which surface in-store availability to nearby searchers, and store visit conversion tracking would be the appropriate measurement tools for this kind of objective.
+
+### Product and Category Prioritization
+
+Not all 15 products in the CPP Farm Store Shopify catalog are equally suited for Shopping Ads. The strongest candidates for campaign prioritization are:
+
+**Gift Baskets and Bundles** — the Farm Store Gift Basket (\$65), Custom Gift Box (\$40–\$100), and Seasonal Bundles have the highest average order value in the catalog and represent clear gifting intent. Customers searching "local gift basket Pomona" or "farm fresh gift box" are high-intent queries that Shopping Ads are well-positioned to capture.
+
+**Fresh Produce and Specialty Foods** — CPP Fresh Orange Juice, Raw Local Honey, and Farm Store Salsa carry a strong local-and-artisan story that differentiates the Farm Store from generic grocery alternatives. These products support brand discovery for customers who may not know the Farm Store exists.
+
+**Student Snacks & Drinks** — this collection serves CPP's core daily foot traffic and is the most volume-driven category. Lower average order value but high frequency — appropriate for awareness-level campaigns.
+
+### Campaign Type and Performance Max
+
+Given CPP Farm Store's current stage — a development-mode Shopify store with a limited product catalog and no live Shopping campaign history — the most appropriate starting point is a **Standard Shopping campaign** rather than jumping directly into Performance Max.
+
+Standard Shopping campaigns give the Farm Store direct control over which products are shown, which queries trigger them, and how budget is allocated across product groups. This control is important at launch because the store does not yet have the conversion data Google's algorithm needs to optimize a Performance Max campaign effectively.
+
+Once the store accumulates 30–50 conversions per month, **Performance Max** becomes the stronger long-term choice. A PMax campaign would extend Farm Store's reach across Google Search, Display, YouTube, Gmail, and Maps simultaneously — all from a single campaign — using asset groups built around the store's product photography, brand story, and audience signals. For a small team with limited campaign management capacity, PMax's automation is a meaningful operational advantage.
+
+### Channels and Customer Touchpoints
+
+The campaign should support at least three customer touchpoints. **Google Search** captures high-intent queries from people actively looking for local produce, gift options, or specialty foods near the CPP campus. **Google Maps** surfaces the physical store location to nearby searchers and drives foot traffic directly. **Display and YouTube** support brand awareness among the CPP student and faculty community — audiences that are geographically close but may not yet know the Farm Store exists online.
+
+### KPIs to Track
+
+For a store at CPP Farm Store's stage, the most important KPIs to track are:
+
+| KPI | Why It Matters |
+|------------------------------------|------------------------------------|
+| Impressions | Measures reach — is the store showing up in relevant searches? |
+| Click-through rate (CTR) | Indicates whether product listings and titles are compelling |
+| Cost per click (CPC) | Informs budget efficiency across product categories |
+| Add-to-cart rate | Shows intent even when a purchase is not completed online |
+| Store visit conversions | Connects digital ad exposure to physical foot traffic |
+| Return on Ad Spend (ROAS) | The ultimate efficiency metric once transaction data accumulates |
+
+### Connection to Group Project Deliverables
+
+The concepts from these modules directly informed three group project deliverables. For the **Campaign Plan**, the retail objective framework helped our group articulate that the Farm Store should pursue a blended online-and-offline strategy rather than treating digital and in-store as separate channels. For the **Creative Brief**, the product prioritization logic — leading with gift baskets and specialty items for their higher AOV and differentiation — shaped which products to feature in campaign creative. For the **Dashboard**, understanding which KPIs Google Shopping surfaces (impressions, CTR, ROAS, store visits) helped our group select the right metrics to include in the Looker Studio reporting layer so the Farm Store team could monitor campaign performance without needing to interpret raw ad platform data.
+
+------------------------------------------------------------------------
+
+## Appendix
+
+- **GitHub Repository:** <https://github.com/mjshawell/IBM-6540-IBM-6300>
+- **GitHub Pages Published URL:** <https://mjshawell.github.io/IBM-6540-IBM-6300/Mickyas-Shawel-ITP-Shopping-Ads-Cert-Part2.html>
+- **Google Skillshop:** <https://skillshop.withgoogle.com>
+- **CPP Farm Store Shopify Store:** <https://cpp-farm-store-dev.myshopify.com>
